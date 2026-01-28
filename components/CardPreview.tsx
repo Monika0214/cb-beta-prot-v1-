@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect } from 'react';
 import { ArrowLeft, Gem, Lock, Check, Zap, Library, Sparkles, BookOpen } from 'lucide-react';
 import { PlayerCard, Squad } from '../types';
@@ -214,7 +213,14 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
 };
 
 /* Mini Upgrade Tile for refined layout */
-const UpgradeTile = ({ u, shake, onClick }: { u: any, shake: number, onClick: () => void }) => {
+/* Fix: Explicitly define props interface to allow 'key' property when rendering in a list */
+interface UpgradeTileProps {
+  u: any;
+  shake: number;
+  onClick: () => void;
+}
+
+const UpgradeTile: React.FC<UpgradeTileProps> = ({ u, shake, onClick }) => {
   const Icon = u.icon;
   const isUnlocked = u.isUnlocked;
   const isAvailable = u.isAvailable;

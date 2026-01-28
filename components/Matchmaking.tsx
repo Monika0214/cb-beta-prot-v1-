@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { Swords, Loader2, MapPin, Coins } from 'lucide-react';
 import { Region } from '../types';
@@ -26,17 +27,16 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
   const [internalFound, setInternalFound] = useState(false);
   const [poolAnimated, setPoolAnimated] = useState(false);
   const [displayPool, setDisplayPool] = useState(0);
-  const [showLabels, setShowLabels] = useState(false);
   const [isPoolPulsing, setIsPoolPulsing] = useState(false);
-  const [phase2Triggered, setPhase2Triggered] = useState(false);
   
   const entryFee = region?.entryFee || 0;
 
+  // Generate coin particles for both sides
   const coins = useMemo(() => {
     const particles: CoinParticle[] = [];
-    for (let i = 0; i < 10; i++) {
-      particles.push({ id: i, side: 'player', delay: i * 0.08 });
-      particles.push({ id: i + 100, side: 'opponent', delay: i * 0.08 });
+    for (let i = 0; i < 15; i++) {
+      particles.push({ id: i, side: 'player', delay: i * 0.1 });
+      particles.push({ id: i + 100, side: 'opponent', delay: i * 0.1 });
     }
     return particles;
   }, []);
@@ -50,21 +50,17 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
         onDeductFee(region.entryFee);
       }
       
-      setTimeout(() => {
-        setShowLabels(true);
-        setTimeout(() => setPoolAnimated(true), 200);
-      }, 300);
-    }, 800);
+      // Short delay before the pool UI appears and starts filling
+      setTimeout(() => setPoolAnimated(true), 500);
+    }, 1200);
 
     return () => clearTimeout(searchTimer);
   }, [region, onDeductFee, internalFound]);
 
   useEffect(() => {
     if (poolAnimated) {
-      // Phase 2 starts as global coins reach the pool rim
-      const p2Timer = setTimeout(() => setPhase2Triggered(true), 600);
-
-      const firstStepDuration = 600;
+      // Step 1: Player's coins entry
+      const firstStepDuration = 1000;
       const firstStepStart = Date.now();
       
       const animateFirstStep = () => {
@@ -76,10 +72,11 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
           requestAnimationFrame(animateFirstStep);
         } else {
           setIsPoolPulsing(true);
-          setTimeout(() => setIsPoolPulsing(false), 250);
+          setTimeout(() => setIsPoolPulsing(false), 200);
           
+          // Step 2: Opponent's coins entry (slight delay)
           setTimeout(() => {
-            const secondStepDuration = 600;
+            const secondStepDuration = 1000;
             const secondStepStart = Date.now();
             
             const animateSecondStep = () => {
@@ -91,23 +88,19 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
                 requestAnimationFrame(animateSecondStep);
               } else {
                 setIsPoolPulsing(true);
-                setTimeout(() => setIsPoolPulsing(false), 250);
-                setTimeout(() => setShowLabels(false), 400);
+                setTimeout(() => setIsPoolPulsing(false), 200);
               }
             };
             requestAnimationFrame(animateSecondStep);
-          }, 150);
+          }, 400);
         }
       };
       
       const timer = setTimeout(() => {
         requestAnimationFrame(animateFirstStep);
-      }, 850); 
+      }, 300); 
 
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(p2Timer);
-      };
+      return () => clearTimeout(timer);
     }
   }, [poolAnimated, entryFee]);
 
@@ -160,60 +153,40 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
   return (
     <div className="h-full w-full flex flex-col bg-zinc-950 animate-in fade-in zoom-in-95 duration-200 overflow-hidden relative">
       
-      {/* PHASE 1: GLOBAL COIN LAYER (Travel to the pool edge) */}
-      <div className="absolute inset-0 z-[100] pointer-events-none overflow-hidden">
-        {poolAnimated && coins.map((coin) => (
-          <div
-            key={`global-${coin.id}`}
-            className="absolute"
-            style={{
-              left: coin.side === 'player' ? '18%' : '82%',
-              top: '30%',
-              opacity: 0,
-              animation: `coin-travel-to-rim-${coin.side} 0.65s cubic-bezier(0.5, 0, 0.7, 0.4) forwards`,
-              animationDelay: `${coin.delay}s`
-            }}
-          >
-            <Coins className="text-yellow-500 drop-shadow-[0_0_12px_rgba(234,179,8,1)]" size={24} />
-          </div>
-        ))}
-      </div>
-
-      <style>{`
-        @keyframes coin-travel-to-rim-player {
-          0% { opacity: 0; transform: translate(0, 0) scale(1) rotate(0deg); }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { 
-            opacity: 0; 
-            transform: translate(calc(50vw - 18vw - 12px), 32vh) scale(0.7) rotate(90deg); 
-          }
-        }
-        @keyframes coin-travel-to-rim-opponent {
-          0% { opacity: 0; transform: translate(0, 0) scale(1) rotate(0deg); }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { 
-            opacity: 0; 
-            transform: translate(calc(-50vw + 18vw + 12px), 32vh) scale(0.7) rotate(-90deg); 
-          }
-        }
-      `}</style>
-
       <div className="flex-1 flex flex-col items-center justify-center gap-10 px-8 z-10">
         <h2 className="heading-font text-5xl font-black italic tracking-tighter text-red-600 uppercase">
           Match Found!
         </h2>
         
-        <div className="w-full flex items-center justify-between relative min-h-[160px]">
+        {/* AVATAR & VS ROW */}
+        <div className="w-full flex items-center justify-between relative min-h-[160px] z-20">
+          
           {/* Player Identity */}
           <div className="flex flex-col items-center gap-3 relative">
-            <div className="w-24 h-24 rounded-full border-4 border-white p-1 bg-zinc-900 shadow-2xl overflow-hidden relative">
+            <div className={`w-24 h-24 rounded-full border-4 transition-all duration-500 p-1 bg-zinc-900 shadow-2xl overflow-hidden relative ${poolAnimated ? 'border-yellow-500 scale-105' : 'border-white'}`}>
               <img src={PLAYER_AVATAR} className="w-full h-full rounded-full object-cover" alt="User" />
               {poolAnimated && (
-                <div className="absolute inset-0 bg-yellow-500/20 animate-pulse pointer-events-none" />
+                <div className="absolute inset-0 bg-yellow-500/10 animate-pulse pointer-events-none" />
               )}
             </div>
+            
+            {/* Player Coin Spawner: Rooted to the bottom of the avatar ring */}
+            <div className="absolute top-[80px] left-1/2 -translate-x-1/2 pointer-events-none">
+              {poolAnimated && coins.filter(c => c.side === 'player').map((coin) => (
+                <div
+                  key={coin.id}
+                  className="absolute"
+                  style={{
+                    animation: `coin-converge-left 1s cubic-bezier(0.4, 0, 0.2, 1) forwards`,
+                    animationDelay: `${coin.delay}s`,
+                    opacity: 0
+                  }}
+                >
+                  <Coins className="text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" size={18} />
+                </div>
+              ))}
+            </div>
+
             <div className="text-center">
               <p className="heading-font text-xl font-bold text-white uppercase leading-none">PlayerOne</p>
               <p className="text-[10px] font-black text-zinc-500 uppercase mt-1 tracking-widest">LV. 5</p>
@@ -224,12 +197,30 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
 
           {/* Opponent Identity */}
           <div className="flex flex-col items-center gap-3 relative">
-            <div className="w-24 h-24 rounded-full border-4 border-red-600 p-1 bg-zinc-900 shadow-2xl overflow-hidden relative">
+            <div className={`w-24 h-24 rounded-full border-4 transition-all duration-500 p-1 bg-zinc-900 shadow-2xl overflow-hidden relative ${poolAnimated ? 'border-yellow-500 scale-105' : 'border-red-600'}`}>
               <img src={opponent?.avatar} className="w-full h-full rounded-full object-cover" alt="Opponent" />
               {poolAnimated && (
-                <div className="absolute inset-0 bg-yellow-500/20 animate-pulse pointer-events-none" />
+                <div className="absolute inset-0 bg-yellow-500/10 animate-pulse pointer-events-none" />
               )}
             </div>
+
+            {/* Opponent Coin Spawner: Rooted to the bottom of the avatar ring */}
+            <div className="absolute top-[80px] left-1/2 -translate-x-1/2 pointer-events-none">
+              {poolAnimated && coins.filter(c => c.side === 'opponent').map((coin) => (
+                <div
+                  key={coin.id}
+                  className="absolute"
+                  style={{
+                    animation: `coin-converge-right 1s cubic-bezier(0.4, 0, 0.2, 1) forwards`,
+                    animationDelay: `${coin.delay + 1.2}s`,
+                    opacity: 0
+                  }}
+                >
+                  <Coins className="text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" size={18} />
+                </div>
+              ))}
+            </div>
+
             <div className="text-center">
               <p className="heading-font text-xl font-bold text-red-500 uppercase leading-none">{opponent?.name.split('_')[0]}</p>
               <p className="text-[10px] font-black text-zinc-500 uppercase mt-1 tracking-widest">LV. {opponent?.level}</p>
@@ -237,67 +228,68 @@ export const Matchmaking: React.FC<MatchmakingProps> = ({
           </div>
         </div>
 
-        {/* POOL UI CONTAINER (Strict Clipping Enforced) */}
-        <div className={`w-full max-w-xs transition-all duration-700 transform ${poolAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} relative`}>
-           <div className={`flex flex-col items-center justify-center gap-2 bg-yellow-600/20 border border-yellow-500/50 px-8 py-6 rounded-[3rem] shadow-[0_0_50px_rgba(234,179,8,0.2)] transition-all duration-300 ${isPoolPulsing ? 'scale-105 shadow-[0_0_70px_rgba(234,179,8,0.4)] border-yellow-400 brightness-110' : ''} relative overflow-hidden min-h-[140px]`}>
-              
-              {/* Pool Interior Background */}
-              <div className="absolute inset-0 bg-zinc-950/70 pointer-events-none z-0" />
-
-              {/* Depth Gradient Mask - Ensures coins "sink" into the pool */}
-              <div className="absolute inset-0 z-20 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-zinc-950/40" />
-
-              {/* PHASE 2: INTERNAL CLIPPED COINS (Falling and Sinking) */}
-              <div className="absolute inset-0 z-10 pointer-events-none">
-                {phase2Triggered && coins.map((coin) => (
-                  <div
-                    key={`local-${coin.id}`}
-                    className="absolute left-1/2"
-                    style={{
-                      top: '-15px', // Start exactly at the top rim
-                      marginLeft: `${(Math.random() - 0.5) * 40}px`, // Reduced jitter to keep contained
-                      opacity: 0,
-                      animation: `coin-sink-vertical 0.65s cubic-bezier(0.3, 0.8, 0.4, 1) forwards`,
-                      animationDelay: `${coin.delay}s`
-                    }}
-                  >
-                    <Coins className="text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" size={18} />
-                  </div>
-                ))}
-              </div>
-
-              <style>{`
-                @keyframes coin-sink-vertical {
-                  0% { 
-                    opacity: 0; 
-                    transform: translateY(0px) scale(0.8); 
-                  }
-                  30% { 
-                    opacity: 1; 
-                  }
-                  70% { 
-                    opacity: 1; 
-                    transform: translateY(40px) scale(0.6); 
-                  }
-                  100% { 
-                    opacity: 0; 
-                    transform: translateY(65px) scale(0.4); 
-                  }
-                }
-              `}</style>
-
-              {/* Central Pool Content */}
+        {/* POOL UI BOX */}
+        <div className={`w-full max-w-xs transition-all duration-700 transform ${poolAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} relative z-30`}>
+           <div 
+             className={`flex flex-col items-center justify-center gap-2 bg-zinc-900/80 border border-yellow-500/30 px-8 py-6 rounded-[3rem] shadow-[0_0_50px_rgba(234,179,8,0.1)] transition-all duration-300 ${isPoolPulsing ? 'scale-105 shadow-[0_0_70px_rgba(234,179,8,0.4)] border-yellow-400 brightness-110' : ''} relative overflow-hidden min-h-[140px]`}
+           >
+              {/* Pool Content Overlay */}
               <div className="flex flex-col items-center gap-1 relative z-30">
                  <div className="flex items-center gap-3">
-                   <Coins size={32} className={`text-yellow-500 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)] ${isPoolPulsing ? 'scale-125' : ''} transition-transform duration-200`} />
+                   <div className="relative">
+                    <Coins size={36} className={`text-yellow-500 drop-shadow-[0_0_15px_rgba(234,179,8,0.6)] ${isPoolPulsing ? 'scale-125' : ''} transition-transform duration-200`} />
+                    {isPoolPulsing && (
+                      <div className="absolute inset-0 bg-white/30 blur-lg rounded-full animate-ping" />
+                    )}
+                   </div>
                    <span className="heading-font text-5xl font-black text-white italic leading-none tracking-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
                       POOL: {displayPool}
                    </span>
                  </div>
-                 <p className="text-[11px] font-black text-yellow-500/80 uppercase tracking-[0.3em] drop-shadow-md">Stakes Locked & Final</p>
+                 <p className="text-[11px] font-black text-yellow-500/90 uppercase tracking-[0.3em] drop-shadow-md">Stakes Locked & Final</p>
               </div>
+
+              {/* Backglow inside pool */}
+              <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/10 to-transparent pointer-events-none opacity-40" />
            </div>
         </div>
+
+        {/* CONVERGING COIN ANIMATIONS */}
+        <style>{`
+          @keyframes coin-converge-left {
+            0% { 
+              opacity: 0; 
+              transform: translate(0, 0) scale(0.6) rotate(0deg); 
+            }
+            15% { 
+              opacity: 1; 
+            }
+            85% { 
+              opacity: 1; 
+            }
+            100% { 
+              opacity: 0; 
+              transform: translate(110px, 150px) scale(0.4) rotate(120deg); 
+            }
+          }
+
+          @keyframes coin-converge-right {
+            0% { 
+              opacity: 0; 
+              transform: translate(0, 0) scale(0.6) rotate(0deg); 
+            }
+            15% { 
+              opacity: 1; 
+            }
+            85% { 
+              opacity: 1; 
+            }
+            100% { 
+              opacity: 0; 
+              transform: translate(-110px, 150px) scale(0.4) rotate(-120deg); 
+            }
+          }
+        `}</style>
 
         {/* Match Context Details */}
         <div className="w-full bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl flex items-center justify-between animate-in fade-in duration-300">

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { LayoutGrid, Users, Trophy, Store as StoreIcon, Coins, Gem, Target, Package, Library, ArrowLeft, Edit2, X, Shield } from 'lucide-react';
 import { AppView, MatchState, Region, Squad, PlayerCard } from './types';
@@ -12,7 +13,9 @@ import { Store } from './components/Store';
 import { Modal } from './components/Modal';
 import { Matchmaking } from './components/Matchmaking';
 import { Gameplay } from './components/Gameplay';
+import { MatchResult } from './components/MatchResult';
 import { MatchStats } from './components/MatchStats';
+import { ProgressionView } from './components/ProgressionView';
 import { EditSquad } from './components/EditSquad';
 import { PlayerProfile } from './components/PlayerProfile';
 import { FriendSearch as FriendSearchComponent } from './components/FriendSearch';
@@ -33,7 +36,9 @@ const VIEW_TITLES: Record<string, string> = {
   [AppView.FRIENDS]: 'SOCIAL',
   [AppView.MATCHMAKING]: 'MATCHMAKING',
   [AppView.GAMEPLAY]: 'GAMEPLAY',
+  [AppView.MATCH_RESULT]: 'MATCH RESULT',
   [AppView.MATCH_STATS]: 'MATCH STATS',
+  [AppView.MATCH_REWARDS]: 'REWARDS',
   [AppView.RANK_PROGRESSION]: 'RANK PROGRESSION',
   [AppView.COLLECTION_LEVEL]: 'COLLECTION LEVEL',
   [AppView.EDIT_SQUAD]: 'EDIT SQUAD',
@@ -67,6 +72,8 @@ const App: React.FC = () => {
   const [squads, setSquads] = useState<Squad[]>(MOCK_SQUADS);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [activeMatch, setActiveMatch] = useState<MatchState | null>(null);
+  const [lastOutcome, setLastOutcome] = useState<{ outcome: 'victory' | 'defeat' | 'draw' | 'declared', declaredBalls: number | null } | null>(null);
+  const [isPostMatch, setIsPostMatch] = useState(false);
 
   const handleBack = () => {
     switch (currentView) {
@@ -75,7 +82,14 @@ const App: React.FC = () => {
       case AppView.PLAYER_PROFILE: setCurrentView(AppView.FRIENDS); break;
       case AppView.RANK_PROGRESSION: setCurrentView(AppView.HOME); break;
       case AppView.COLLECTION_LEVEL: setCurrentView(AppView.HOME); break;
-      default: setCurrentView(AppView.HOME);
+      case AppView.MATCH_RESULT: setCurrentView(AppView.GAMEPLAY); break;
+      case AppView.MATCH_STATS:
+      case AppView.MATCH_REWARDS:
+        setCurrentView(isPostMatch ? AppView.GAMEPLAY : AppView.MATCH_RESULT);
+        break;
+      default: 
+        setIsPostMatch(false);
+        setCurrentView(AppView.HOME);
     }
   };
 
@@ -99,6 +113,7 @@ const App: React.FC = () => {
   };
 
   const startBrawl = (region: Region) => {
+    setIsPostMatch(false);
     setActiveMatch({
       opponent: { name: 'DarkKnight_99', level: 7, avatar: 'https://images.unsplash.com/photo-1624192132371-367288e67f08?auto=format&fit=crop&q=80&w=200&h=200', squadPower: 245 },
       region: region, ballsPlayed: 0, playerWins: 0, opponentWins: 0, currentStadium: 1, isDeclared: false, score: { player: 0, opponent: 0 }, playedCards: []
@@ -119,8 +134,26 @@ const App: React.FC = () => {
       case AppView.COLLECTION_LEVEL: return <LevelProgression onClose={handleBack} level={userProfile.level} xp={userProfile.xp} />;
       case AppView.EDIT_SQUAD: return <EditSquad squadId={editingSquadId} squads={squads} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} onBack={handleBack} userCoins={userProfile.coins} userEnergy={userProfile.energyDrinks} userGems={userProfile.gems} cardUpgrades={cardUpgrades} onUpgrade={handleUpgradeCard} />;
       case AppView.MATCHMAKING: return <Matchmaking opponent={activeMatch?.opponent} region={activeMatch?.region} onDeductFee={(a) => setUserProfile(p => ({ ...p, coins: p.coins - a }))} onStart={() => setCurrentView(AppView.GAMEPLAY)} />;
-      case AppView.GAMEPLAY: return <Gameplay match={activeMatch!} onComplete={() => setCurrentView(AppView.MATCH_STATS)} />;
-      case AppView.MATCH_STATS: return <MatchStats match={activeMatch!} onBrawlAgain={() => startBrawl(activeMatch!.region)} onExit={() => setCurrentView(AppView.HOME)} />;
+      case AppView.GAMEPLAY: return <Gameplay match={activeMatch!} isPostMatch={isPostMatch} onNavigate={setCurrentView} onComplete={(outcome, declaredBalls) => { setLastOutcome({ outcome, declaredBalls }); setIsPostMatch(true); setCurrentView(AppView.MATCH_RESULT); }} />;
+      case AppView.MATCH_RESULT: return <MatchResult outcome={lastOutcome!.outcome} onNavigate={setCurrentView} onBack={handleBack} />;
+      case AppView.MATCH_STATS: return <MatchStats match={activeMatch!} onBrawlAgain={() => startBrawl(activeMatch!.region)} onExit={() => { setIsPostMatch(false); setCurrentView(AppView.HOME); }} />;
+      case AppView.MATCH_REWARDS: 
+        const isVictory = lastOutcome?.outcome === 'victory';
+        const fee = activeMatch?.region.entryFee || 100;
+        return (
+          <ProgressionView 
+            outcome={lastOutcome!.outcome} 
+            declaredBalls={lastOutcome!.declaredBalls} 
+            oldXp={userProfile.xp} 
+            oldLevel={userProfile.level} 
+            currentXp={userProfile.xp + (isVictory ? 150 : 50)} 
+            currentLevel={userProfile.level} 
+            oldCoins={userProfile.coins} 
+            currentCoins={userProfile.coins + (isVictory ? fee * 2 : -fee)} 
+            onClose={() => { setIsPostMatch(false); setCurrentView(AppView.HOME); }}
+            match={activeMatch!}
+          />
+        );
       case AppView.SEARCH_FRIENDS: return <FriendSearchComponent onBack={handleBack} onOpenProfile={(u) => { setSelectedProfile(u); setCurrentView(AppView.PLAYER_PROFILE); }} />;
       case AppView.PLAYER_PROFILE: return <PlayerProfile user={selectedProfile} onBack={handleBack} />;
       default: return null;
@@ -141,7 +174,7 @@ const App: React.FC = () => {
   const showGlobalHeader = currentView !== AppView.HOME;
   const isRootTab = ROOT_TABS.includes(currentView);
   
-  const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_STATS].includes(currentView);
+  const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_RESULT, AppView.MATCH_STATS, AppView.MATCH_REWARDS].includes(currentView);
   const showBottomNav = !isImmersiveFlow;
 
   return (

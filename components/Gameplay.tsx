@@ -1,12 +1,14 @@
 
 import React, { useState, useMemo } from 'react';
-import { ShieldAlert, Trophy, Zap, Package, Info, AlertTriangle, Coins, FlaskConical, X, CheckCircle2, XCircle, MinusCircle, FastForward } from 'lucide-react';
-import { MatchState, PlayerCard } from '../types';
+import { ShieldAlert, Trophy, Zap, AlertTriangle, Coins, FlaskConical, X } from 'lucide-react';
+import { MatchState, PlayerCard, AppView } from '../types';
 import { MOCK_CARDS } from '../constants';
 import { Card } from './Card';
 
 interface GameplayProps {
   match: MatchState;
+  isPostMatch?: boolean;
+  onNavigate?: (view: AppView) => void;
   onComplete: (outcome: 'victory' | 'defeat' | 'draw' | 'declared', declaredBalls: number | null) => void;
 }
 
@@ -18,8 +20,8 @@ interface StadiumData {
   playedCards: { card: PlayerCard; side: 'player' | 'opponent' }[];
 }
 
-export const Gameplay: React.FC<GameplayProps> = ({ match, onComplete }) => {
-  const [ballsPlayed, setBallsPlayed] = useState(0);
+export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, onNavigate, onComplete }) => {
+  const [ballsPlayed, setBallsPlayed] = useState(isPostMatch ? 6 : 0);
   const [stadiums, setStadiums] = useState<StadiumData[]>([
     { id: 1, name: 'Stadium A', playerScore: 0, opponentScore: 0, playedCards: [] },
     { id: 2, name: 'Stadium B', playerScore: 0, opponentScore: 0, playedCards: [] },
@@ -32,8 +34,8 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, onComplete }) => {
   const [isDeclareModalOpen, setIsDeclareModalOpen] = useState(false);
   const [isDevPanelOpen, setIsDevPanelOpen] = useState(false);
 
-  // Ball limit constraint
-  const isMatchOver = ballsPlayed >= 6;
+  // Interaction constraints
+  const isMatchOver = isPostMatch || ballsPlayed >= 6;
 
   const handleDragStart = (card: PlayerCard) => {
     if (isMatchOver) return;
@@ -90,22 +92,13 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, onComplete }) => {
       if (playerWon > oppWon) outcome = 'victory';
       else if (oppWon > playerWon) outcome = 'defeat';
       
-      // Irreversible final transition
       setTimeout(() => onComplete(outcome, null), 800);
     } else {
       setBallsPlayed(nextBall);
     }
   };
 
-  // Strategic Refund Logic based on ball count
   const refundFactor = useMemo(() => {
-    // Balls Played → Refund %
-    // 0–1 → 50%
-    // 2 → 45%
-    // 3 → 40%
-    // 4 → 30%
-    // 5 → 20%
-    // 6 → 0%
     if (ballsPlayed <= 1) return 0.50;
     if (ballsPlayed === 2) return 0.45;
     if (ballsPlayed === 3) return 0.40;
@@ -131,14 +124,15 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, onComplete }) => {
   return (
     <div className="h-full flex flex-col bg-zinc-950 text-white select-none overflow-hidden relative">
       
-      {/* SIMULATE RESULT: Yellow/Tactical Style */}
-      <button 
-        onClick={() => setIsDevPanelOpen(true)}
-        className="absolute top-20 right-4 z-[70] px-4 py-2 bg-yellow-500 rounded-full text-[10px] font-black text-black uppercase tracking-widest shadow-xl flex items-center gap-2 border border-yellow-400/50 active:scale-95 transition-all"
-      >
-        <FlaskConical size={12} />
-        SIMULATE RESULT
-      </button>
+      {!isPostMatch && (
+        <button 
+          onClick={() => setIsDevPanelOpen(true)}
+          className="absolute top-20 right-4 z-[70] px-4 py-2 bg-yellow-500 rounded-full text-[10px] font-black text-black uppercase tracking-widest shadow-xl flex items-center gap-2 border border-yellow-400/50 active:scale-95 transition-all"
+        >
+          <FlaskConical size={12} />
+          SIMULATE RESULT
+        </button>
+      )}
 
       <section className="px-4 py-4 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 flex items-center justify-between z-50">
         <div className="flex items-center gap-2">
@@ -149,8 +143,8 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, onComplete }) => {
         </div>
 
         <div className="flex flex-col items-center">
-          <p className={`text-[10px] font-black uppercase tracking-widest ${ballsPlayed >= 5 ? 'text-red-500 animate-pulse' : 'text-zinc-500'}`}>
-            BALL {Math.min(ballsPlayed + 1, 6)} / 6
+          <p className={`text-[10px] font-black uppercase tracking-widest ${ballsPlayed >= 5 && !isPostMatch ? 'text-red-500 animate-pulse' : 'text-zinc-500'}`}>
+            {isPostMatch ? 'MATCH COMPLETED' : `BALL ${Math.min(ballsPlayed + 1, 6)} / 6`}
           </p>
           <div className="flex items-center gap-2">
             <Coins size={12} className="text-yellow-500" />
@@ -166,7 +160,7 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, onComplete }) => {
         </div>
       </section>
 
-      {/* Main Gameplay Area with scrolling space for fixed footer */}
+      {/* Main Gameplay Area */}
       <div className="flex-1 overflow-y-auto no-scrollbar pb-[140px] p-2">
         <section className="flex gap-2 items-stretch min-h-[350px]">
           {stadiums.map((stadium) => {
@@ -174,8 +168,8 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, onComplete }) => {
             return (
               <div 
                 key={stadium.id}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => handleDrop(stadium.id)}
+                onDragOver={(e) => !isPostMatch && e.preventDefault()}
+                onDrop={() => !isPostMatch && handleDrop(stadium.id)}
                 className={`flex-1 flex flex-col rounded-2xl border-2 transition-all duration-300 ${
                   isWinning ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-zinc-800 bg-zinc-900/40'
                 }`}
@@ -215,35 +209,46 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, onComplete }) => {
         </section>
       </div>
 
-      {/* FIXED BOTTOM ACTION BAR: Decisive and Solid */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-900 flex gap-3 p-4 pb-10 z-[60] shadow-[0_-15px_40px_rgba(0,0,0,0.8)]">
+      {/* FOOTER ACTIONS */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-900 p-4 pb-10 z-[60] shadow-[0_-15px_40px_rgba(0,0,0,0.8)]">
         <div className="max-w-lg mx-auto w-full flex gap-3">
-          <button 
-            onClick={() => setIsDeclareModalOpen(true)}
-            disabled={isMatchOver}
-            className={`p-4 rounded-xl transition-all border ${
-              isMatchOver 
-                ? 'bg-zinc-900/50 text-zinc-800 border-zinc-900' 
-                : 'bg-zinc-900 text-zinc-500 hover:text-white border-zinc-800 active:scale-95'
-            }`}
-          >
-            <ShieldAlert size={24} />
-          </button>
-          <button 
-            onClick={handleEndBall}
-            disabled={isMatchOver}
-            className={`flex-1 rounded-xl heading-font text-3xl font-black italic uppercase tracking-wider transition-all ${
-              isMatchOver
-                ? 'bg-zinc-800 text-zinc-600 border-zinc-700 cursor-not-allowed'
-                : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_10px_30px_rgba(220,38,38,0.4)] border-b-4 border-red-800 active:scale-[0.98] active:border-b-0'
-            }`}
-          >
-            {isMatchOver ? 'Match Ended' : 'End Ball'}
-          </button>
+          {isPostMatch ? (
+            <button 
+              onClick={() => onNavigate?.(AppView.MATCH_REWARDS)}
+              className="w-full py-5 bg-red-600 hover:bg-red-500 text-white rounded-2xl heading-font text-2xl font-black italic uppercase tracking-wider shadow-[0_10px_30px_rgba(220,38,38,0.4)] transition-all active:scale-95 border-b-4 border-red-800"
+            >
+              SHOW REWARDS
+            </button>
+          ) : (
+            <>
+              <button 
+                onClick={() => setIsDeclareModalOpen(true)}
+                disabled={isMatchOver}
+                className={`p-4 rounded-xl transition-all border ${
+                  isMatchOver 
+                    ? 'bg-zinc-900/50 text-zinc-800 border-zinc-900' 
+                    : 'bg-zinc-900 text-zinc-500 hover:text-white border-zinc-800 active:scale-95'
+                }`}
+              >
+                <ShieldAlert size={24} />
+              </button>
+              <button 
+                onClick={handleEndBall}
+                disabled={isMatchOver}
+                className={`flex-1 rounded-xl heading-font text-3xl font-black italic uppercase tracking-wider transition-all ${
+                  isMatchOver
+                    ? 'bg-zinc-800 text-zinc-600 border-zinc-700 cursor-not-allowed'
+                    : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_10px_30px_rgba(220,38,38,0.4)] border-b-4 border-red-800 active:scale-[0.98] active:border-b-0'
+                }`}
+              >
+                {isMatchOver ? 'Match Ended' : 'End Ball'}
+              </button>
+            </>
+          )}
         </div>
       </footer>
 
-      {isDeclareModalOpen && (
+      {isDeclareModalOpen && !isPostMatch && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
              <div className="flex flex-col items-center text-center gap-4">
@@ -285,7 +290,7 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, onComplete }) => {
         </div>
       )}
 
-      {isDevPanelOpen && (
+      {isDevPanelOpen && !isPostMatch && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-xs bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl">
              <div className="flex justify-between items-center mb-6">
