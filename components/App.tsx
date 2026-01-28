@@ -18,7 +18,8 @@ import { ProgressionView } from './ProgressionView';
 import { EditSquad } from './EditSquad';
 import { PlayerProfile } from './PlayerProfile';
 import { FriendSearch as FriendSearchComponent } from './FriendSearch';
-import { MOCK_SQUADS, MOCK_CARDS } from './constants';
+import { ArenaSelector } from './ArenaSelector';
+import { MOCK_SQUADS, MOCK_CARDS, MOCK_REGIONS } from './constants';
 
 const PREDEFINED_AVATARS = [
   'https://images.unsplash.com/photo-1540747913346-19e3adcc174b?auto=format&fit=crop&q=80&w=300&h=300',
@@ -39,10 +40,11 @@ const VIEW_TITLES: Record<string, string> = {
   [AppView.MATCH_STATS]: 'MATCH STATS',
   [AppView.MATCH_REWARDS]: 'REWARDS',
   [AppView.RANK_PROGRESSION]: 'RANK PROGRESSION',
-  [AppView.COLLECTION_LEVEL]: 'COLLECTION LEVEL',
+  [AppView.COLLECTION_LEVEL]: 'RANK LEVEL',
   [AppView.EDIT_SQUAD]: 'EDIT SQUAD',
   [AppView.SEARCH_FRIENDS]: 'SEARCH FRIENDS',
   [AppView.PLAYER_PROFILE]: 'PLAYER PROFILE',
+  [AppView.ARENA_SELECTOR]: 'ARENA SELECTOR'
 };
 
 const ROOT_TABS = [AppView.HOME, AppView.COLLECTIONS, AppView.STORE, AppView.LEADERBOARD, AppView.FRIENDS];
@@ -52,7 +54,7 @@ const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState({
     name: 'PlayerOne',
     avatar: PREDEFINED_AVATARS[0],
-    level: 5,
+    level: 10,
     xp: 1240,
     rank: 5,
     coins: 12500,
@@ -71,7 +73,14 @@ const App: React.FC = () => {
   const [squads, setSquads] = useState<Squad[]>(MOCK_SQUADS);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [activeMatch, setActiveMatch] = useState<MatchState | null>(null);
-  const [lastOutcome, setLastOutcome] = useState<{ outcome: 'victory' | 'defeat' | 'draw' | 'declared', declaredBalls: number | null } | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<Region>(MOCK_REGIONS[0]);
+  const [lastOutcome, setLastOutcome] = useState<{ 
+    outcome: 'victory' | 'defeat' | 'draw' | 'declared', 
+    declaredBalls: number | null, 
+    payout: number,
+    energyReward: number,
+    gemReward: number
+  } | null>(null);
   const [isPostMatch, setIsPostMatch] = useState(false);
 
   const handleBack = () => {
@@ -81,7 +90,15 @@ const App: React.FC = () => {
       case AppView.PLAYER_PROFILE: setCurrentView(AppView.FRIENDS); break;
       case AppView.RANK_PROGRESSION: setCurrentView(AppView.HOME); break;
       case AppView.COLLECTION_LEVEL: setCurrentView(AppView.HOME); break;
-      case AppView.MATCH_STATS: setCurrentView(AppView.GAMEPLAY); break;
+      case AppView.ARENA_SELECTOR: setCurrentView(AppView.HOME); break;
+      case AppView.MATCH_REWARDS:
+        setIsPostMatch(true);
+        setCurrentView(AppView.MATCH_STATS);
+        break;
+      case AppView.MATCH_STATS:
+        setIsPostMatch(true);
+        setCurrentView(AppView.GAMEPLAY);
+        break;
       default: 
         setIsPostMatch(false);
         setCurrentView(AppView.HOME);
@@ -112,14 +129,21 @@ const App: React.FC = () => {
     setLastOutcome(null);
     setActiveMatch({
       opponent: { name: 'DarkKnight_99', level: 7, avatar: 'https://images.unsplash.com/photo-1624192132371-367288e67f08?auto=format&fit=crop&q=80&w=200&h=200', squadPower: 245 },
-      region: region, ballsPlayed: 0, playerWins: 0, opponentWins: 0, currentStadium: 1, isDeclared: false, score: { player: 0, opponent: 0 }, playedCards: []
+      region: region, ballsPlayed: 0, playerWins: 0, opponentWins: 0, currentStadium: 1, isDeclared: false, isDoubled: false, score: { player: 0, opponent: 0 }, playedCards: []
     });
     setCurrentView(AppView.MATCHMAKING);
   };
 
+  const handleDoublePool = () => {
+    if (activeMatch && !activeMatch.isDoubled) {
+      setActiveMatch({ ...activeMatch, isDoubled: true });
+    }
+  };
+
   const renderView = () => {
     switch (currentView) {
-      case AppView.HOME: return <Home setView={setCurrentView} startBrawl={startBrawl} squads={squads} activeSquadId={activeSquadId} onSelectSquad={setActiveSquadId} onEditSquad={handleEditSquad} userLevel={userProfile.level} />;
+      case AppView.HOME: return <Home setView={setCurrentView} startBrawl={startBrawl} squads={squads} activeSquadId={activeSquadId} onSelectSquad={setActiveSquadId} onEditSquad={handleEditSquad} userLevel={userProfile.level} selectedRegion={selectedRegion} />;
+      case AppView.ARENA_SELECTOR: return <ArenaSelector currentRegion={selectedRegion} userLevel={userProfile.level} onConfirm={(r) => { setSelectedRegion(r); setCurrentView(AppView.HOME); }} onBack={handleBack} />;
       case AppView.COLLECTIONS: 
         const ownedCards = MOCK_CARDS.filter(c => ownedCardIds.includes(c.id));
         return <Collections userProfile={userProfile} cardUpgrades={cardUpgrades} onUpgradeCard={handleUpgradeCard} onEditSquad={handleEditSquad} activeTab={collectionsTab} setActiveTab={setCollectionsTab} squads={squads} activeSquadId={activeSquadId} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} customCards={ownedCards} />;
@@ -130,12 +154,48 @@ const App: React.FC = () => {
       case AppView.COLLECTION_LEVEL: return <LevelProgression onClose={handleBack} level={userProfile.level} xp={userProfile.xp} />;
       case AppView.EDIT_SQUAD: return <EditSquad squadId={editingSquadId} squads={squads} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} onBack={handleBack} userCoins={userProfile.coins} userEnergy={userProfile.energyDrinks} userGems={userProfile.gems} cardUpgrades={cardUpgrades} onUpgrade={handleUpgradeCard} />;
       case AppView.MATCHMAKING: return <Matchmaking opponent={activeMatch?.opponent} region={activeMatch?.region} onDeductFee={(a) => setUserProfile(p => ({ ...p, coins: p.coins - a }))} onStart={() => setCurrentView(AppView.GAMEPLAY)} />;
-      case AppView.GAMEPLAY: return <Gameplay match={activeMatch!} isPostMatch={isPostMatch} onNavigate={setCurrentView} onComplete={(outcome, declaredBalls) => { setLastOutcome({ outcome, declaredBalls }); setIsPostMatch(true); setCurrentView(AppView.MATCH_RESULT); }} />;
+      case AppView.GAMEPLAY: return <Gameplay match={activeMatch!} isPostMatch={isPostMatch} onNavigate={setCurrentView} onDoublePool={handleDoublePool} onComplete={(outcome, declaredBalls) => { 
+        const initialPool = (activeMatch?.region.entryFee || 0) * 2;
+        let playablePool = Math.floor(initialPool * 0.9);
+        if (activeMatch?.isDoubled) playablePool *= 2;
+        
+        let payout = 0;
+        let energyReward = 0;
+        let gemReward = 0;
+
+        if (outcome === 'victory') {
+          payout = playablePool;
+          energyReward = activeMatch?.region.energyReward || 2;
+          if (Math.random() < 0.1) gemReward = 5;
+        } else if (outcome === 'draw') {
+          payout = Math.floor(playablePool * 0.5);
+          energyReward = 1;
+        } else if (outcome === 'declared') {
+          const refundFactor = declaredBalls === null ? 0 : [0.5, 0.5, 0.45, 0.4, 0.3, 0.2, 0][declaredBalls] || 0;
+          payout = Math.floor(playablePool * refundFactor);
+        }
+        
+        if (payout > 0 || energyReward > 0 || gemReward > 0) {
+          setUserProfile(p => ({ 
+            ...p, 
+            coins: p.coins + payout,
+            energyDrinks: p.energyDrinks + energyReward,
+            gems: p.gems + gemReward
+          }));
+        }
+
+        if (outcome === 'victory') {
+          setUserProfile(p => ({ ...p, wins: p.wins + 1 }));
+        }
+        
+        setLastOutcome({ outcome, declaredBalls, payout, energyReward, gemReward }); 
+        setIsPostMatch(true); 
+        setCurrentView(AppView.MATCH_RESULT); 
+      }} />;
       case AppView.MATCH_RESULT: return <MatchResult outcome={lastOutcome!.outcome} onNavigate={setCurrentView} onBack={handleBack} />;
       case AppView.MATCH_STATS: return <MatchStats match={activeMatch!} onBrawlAgain={() => startBrawl(activeMatch!.region)} onExit={() => { setIsPostMatch(false); setCurrentView(AppView.HOME); }} onBack={handleBack} />;
       case AppView.MATCH_REWARDS: 
         const isVictory = lastOutcome?.outcome === 'victory';
-        const fee = activeMatch?.region.entryFee || 100;
         return (
           <ProgressionView 
             outcome={lastOutcome!.outcome} 
@@ -143,8 +203,9 @@ const App: React.FC = () => {
             oldLevel={userProfile.level} 
             currentXp={userProfile.xp + (isVictory ? 150 : 50)} 
             currentLevel={userProfile.level} 
-            oldCoins={userProfile.coins} 
-            currentCoins={userProfile.coins + (isVictory ? fee * 2 : -fee)} 
+            payout={lastOutcome?.payout || 0}
+            energyEarned={lastOutcome?.energyReward || 0}
+            gemsEarned={lastOutcome?.gemReward || 0}
             onNavigate={setCurrentView}
             onClose={() => { setIsPostMatch(false); setCurrentView(AppView.HOME); }}
           />
@@ -166,10 +227,11 @@ const App: React.FC = () => {
     setCurrentView(AppView.EDIT_SQUAD);
   };
 
-  const showGlobalHeader = currentView !== AppView.HOME;
+  // Rank Level view handles its own header and back button
+  const showGlobalHeader = currentView !== AppView.HOME && currentView !== AppView.ARENA_SELECTOR && currentView !== AppView.MATCH_REWARDS && currentView !== AppView.COLLECTION_LEVEL;
   const isRootTab = ROOT_TABS.includes(currentView);
   
-  const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_RESULT, AppView.MATCH_STATS, AppView.MATCH_REWARDS].includes(currentView);
+  const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_RESULT, AppView.MATCH_STATS, AppView.MATCH_REWARDS, AppView.ARENA_SELECTOR].includes(currentView);
   const showBottomNav = !isImmersiveFlow;
 
   return (
@@ -177,9 +239,7 @@ const App: React.FC = () => {
       
       {currentView === AppView.HOME && (
         <header className="sticky top-0 z-[60] bg-black/95 backdrop-blur-2xl border-b border-zinc-900/50 animate-header-entry px-4 py-3 flex items-center justify-between gap-2">
-          {/* Identity Section */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Unified Identity Block (Avatar + Name Only) */}
             <div 
               onClick={() => setIsProfileModalOpen(true)} 
               className="flex items-center gap-2 bg-[#1c1c1e] rounded-full pr-3 py-0.5 pl-0.5 cursor-pointer hover:bg-zinc-800 transition-all active:scale-95 shadow-lg border border-white/5 shrink-0"
@@ -190,14 +250,12 @@ const App: React.FC = () => {
               <span className="text-[10px] font-bold text-zinc-100 uppercase tracking-tight leading-none whitespace-nowrap">{userProfile.name}</span>
             </div>
 
-            {/* Separated Level UI (Yellow Glowing Badge) */}
             <RankPill 
               rank={userProfile.level} 
               onClick={(e) => { e.stopPropagation(); setCurrentView(AppView.COLLECTION_LEVEL); }} 
             />
           </div>
 
-          {/* Compact Currency Section */}
           <div className="flex items-center gap-2 shrink-0">
             <div 
               onClick={() => setCurrentView(AppView.STORE)} 

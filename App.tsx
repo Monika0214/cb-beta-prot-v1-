@@ -40,7 +40,7 @@ const VIEW_TITLES: Record<string, string> = {
   [AppView.MATCH_STATS]: 'MATCH STATS',
   [AppView.MATCH_REWARDS]: 'REWARDS',
   [AppView.RANK_PROGRESSION]: 'RANK PROGRESSION',
-  [AppView.COLLECTION_LEVEL]: 'COLLECTION LEVEL',
+  [AppView.COLLECTION_LEVEL]: 'RANK LEVEL',
   [AppView.EDIT_SQUAD]: 'EDIT SQUAD',
   [AppView.SEARCH_FRIENDS]: 'SEARCH FRIENDS',
   [AppView.PLAYER_PROFILE]: 'PLAYER PROFILE',
@@ -74,7 +74,13 @@ const App: React.FC = () => {
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [activeMatch, setActiveMatch] = useState<MatchState | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<Region>(MOCK_REGIONS[0]);
-  const [lastOutcome, setLastOutcome] = useState<{ outcome: 'victory' | 'defeat' | 'draw' | 'declared', declaredBalls: number | null, payout: number } | null>(null);
+  const [lastOutcome, setLastOutcome] = useState<{ 
+    outcome: 'victory' | 'defeat' | 'draw' | 'declared', 
+    declaredBalls: number | null, 
+    payout: number,
+    energyReward: number,
+    gemReward: number
+  } | null>(null);
   const [isPostMatch, setIsPostMatch] = useState(false);
 
   const handleBack = () => {
@@ -87,7 +93,7 @@ const App: React.FC = () => {
       case AppView.ARENA_SELECTOR: setCurrentView(AppView.HOME); break;
       case AppView.MATCH_REWARDS:
         setIsPostMatch(true);
-        setCurrentView(AppView.GAMEPLAY);
+        setCurrentView(AppView.MATCH_STATS);
         break;
       case AppView.MATCH_STATS:
         setIsPostMatch(true);
@@ -152,16 +158,38 @@ const App: React.FC = () => {
         const initialPool = (activeMatch?.region.entryFee || 0) * 2;
         let playablePool = Math.floor(initialPool * 0.9);
         if (activeMatch?.isDoubled) playablePool *= 2;
+        
         let payout = 0;
-        if (outcome === 'victory') payout = playablePool;
-        else if (outcome === 'draw') payout = Math.floor(playablePool * 0.5);
-        else if (outcome === 'declared') {
+        let energyReward = 0;
+        let gemReward = 0;
+
+        if (outcome === 'victory') {
+          payout = playablePool;
+          energyReward = activeMatch?.region.energyReward || 2;
+          // 10% chance for 5 Gems on victory
+          if (Math.random() < 0.1) gemReward = 5;
+        } else if (outcome === 'draw') {
+          payout = Math.floor(playablePool * 0.5);
+          energyReward = 1;
+        } else if (outcome === 'declared') {
           const refundFactor = declaredBalls === null ? 0 : [0.5, 0.5, 0.45, 0.4, 0.3, 0.2, 0][declaredBalls] || 0;
           payout = Math.floor(playablePool * refundFactor);
         }
-        if (payout > 0) setUserProfile(p => ({ ...p, coins: p.coins + payout }));
-        if (outcome === 'victory') setUserProfile(p => ({ ...p, wins: p.wins + 1 }));
-        setLastOutcome({ outcome, declaredBalls, payout }); 
+        
+        if (payout > 0 || energyReward > 0 || gemReward > 0) {
+          setUserProfile(p => ({ 
+            ...p, 
+            coins: p.coins + payout,
+            energyDrinks: p.energyDrinks + energyReward,
+            gems: p.gems + gemReward
+          }));
+        }
+
+        if (outcome === 'victory') {
+          setUserProfile(p => ({ ...p, wins: p.wins + 1 }));
+        }
+        
+        setLastOutcome({ outcome, declaredBalls, payout, energyReward, gemReward }); 
         setIsPostMatch(true); 
         setCurrentView(AppView.MATCH_RESULT); 
       }} />;
@@ -177,6 +205,8 @@ const App: React.FC = () => {
             currentXp={userProfile.xp + (isVictory ? 150 : 50)} 
             currentLevel={userProfile.level} 
             payout={lastOutcome?.payout || 0}
+            energyEarned={lastOutcome?.energyReward || 0}
+            gemsEarned={lastOutcome?.gemReward || 0}
             onNavigate={setCurrentView}
             onClose={() => { setIsPostMatch(false); setCurrentView(AppView.HOME); }}
           />
@@ -198,7 +228,7 @@ const App: React.FC = () => {
     setCurrentView(AppView.EDIT_SQUAD);
   };
 
-  const showGlobalHeader = currentView !== AppView.HOME && currentView !== AppView.ARENA_SELECTOR;
+  const showGlobalHeader = currentView !== AppView.HOME && currentView !== AppView.ARENA_SELECTOR && currentView !== AppView.MATCH_REWARDS;
   const isRootTab = ROOT_TABS.includes(currentView);
   
   const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_RESULT, AppView.MATCH_STATS, AppView.MATCH_REWARDS, AppView.ARENA_SELECTOR].includes(currentView);
