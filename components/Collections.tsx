@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { MOCK_CARDS, EMBLEMS } from '../constants';
 import { Plus, Edit2, Zap, Trophy } from 'lucide-react';
@@ -30,7 +29,7 @@ interface CollectionsProps {
   onUpdateSquad: (squad: Squad) => void;
   userProfile: any;
   cardUpgrades: Record<string, number>;
-  onUpgradeCard: (cardId: string, coins: number, energy: number) => void;
+  onUpgradeCard: (cardId: string, bitValue?: number) => void;
   customCards?: PlayerCard[];
 }
 
@@ -62,6 +61,12 @@ export const Collections: React.FC<CollectionsProps> = ({
 
   const sortedCosts = useMemo(() => Object.keys(groupedCards).map(Number).sort((a, b) => a - b), [groupedCards]);
 
+  const getCardStage = (cardId: string) => {
+    const bitValue = cardUpgrades[cardId] || 0;
+    // Count how many bits are set (1, 2, 4, 8)
+    return [1, 2, 4, 8].filter(bit => bitValue & bit).length;
+  };
+
   return (
     <div className="flex flex-col gap-6 px-4 py-6 pb-32">
       <div className="flex gap-2 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
@@ -92,11 +97,19 @@ export const Collections: React.FC<CollectionsProps> = ({
                 <h3 className="heading-font text-2xl font-black italic text-zinc-500 uppercase tracking-widest">{cost} COST PLAYERS</h3>
               </div>
               <div className="grid grid-cols-2 gap-x-5 gap-y-10">
-                {groupedCards[cost].map((card) => (
-                  <div key={card.id} className="flex flex-col gap-3 cursor-pointer hover:scale-105 active:scale-95 transition-transform" onClick={() => setPreviewCard(card)}>
-                    <Card card={card} className="shadow-2xl" stage={cardUpgrades[card.id] || 0} />
-                  </div>
-                ))}
+                {groupedCards[cost].map((card) => {
+                  const cardStage = getCardStage(card.id);
+                  return (
+                    <div key={card.id} className="flex flex-col gap-3 cursor-pointer hover:scale-105 active:scale-95 transition-transform" onClick={() => setPreviewCard(card)}>
+                      <Card 
+                        card={card} 
+                        className="shadow-2xl" 
+                        stage={cardStage} 
+                        showSparkle={cardStage > 0}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </section>
           )) : (
@@ -167,7 +180,7 @@ export const Collections: React.FC<CollectionsProps> = ({
           userGems={userProfile.gems}
           userLevel={userProfile.level}
           cardUpgrades={cardUpgrades[previewCard.id] || 0}
-          onUpgrade={(c) => onUpgradeCard(c.id, 0, 0)} // Placeholder cost
+          onUpgrade={(c, bit) => onUpgradeCard(c.id, bit)}
           squads={squads}
         />
       )}

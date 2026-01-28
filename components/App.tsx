@@ -17,7 +17,7 @@ import { MatchStats } from './MatchStats';
 import { EditSquad } from './EditSquad';
 import { PlayerProfile } from './PlayerProfile';
 import { FriendSearch as FriendSearchComponent } from './FriendSearch';
-import { MOCK_SQUADS, MOCK_CARDS } from '../constants';
+import { MOCK_SQUADS, MOCK_CARDS } from './constants';
 
 const PREDEFINED_AVATARS = [
   'https://images.unsplash.com/photo-1540747913346-19e3adcc174b?auto=format&fit=crop&q=80&w=300&h=300',
@@ -61,7 +61,6 @@ const App: React.FC = () => {
   const [ownedCardIds, setOwnedCardIds] = useState<string[]>(['1', '2', '3', '4', '5', '6']);
   const [cardUpgrades, setCardUpgrades] = useState<Record<string, number>>({});
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
   const [isMissionsModalOpen, setIsMissionsModalOpen] = useState(false);
   const [editingSquadId, setEditingSquadId] = useState<string | null>(null);
   const [activeSquadId, setActiveSquadId] = useState<string>(MOCK_SQUADS[0].id);
@@ -81,16 +80,17 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUpgradeCard = (cardId: string, costCoins: number, costEnergy: number) => {
-    setUserProfile(prev => ({
-      ...prev,
-      coins: prev.coins - costCoins,
-      energyDrinks: prev.energyDrinks - costEnergy
-    }));
-    setCardUpgrades(prev => ({
-      ...prev,
-      [cardId]: (prev[cardId] || 0) + 1
-    }));
+  const handleUpgradeCard = (cardId: string, bitValue: number = 0, costEnergy: number = 0) => {
+    setCardUpgrades(prev => {
+      const current = prev[cardId] || 0;
+      if (costEnergy > 0) {
+        setUserProfile(p => ({ ...p, energyDrinks: p.energyDrinks - costEnergy }));
+      }
+      if (bitValue > 0) {
+        return { ...prev, [cardId]: current | bitValue };
+      }
+      return { ...prev, [cardId]: current + 1 };
+    });
   };
 
   const handlePurchaseCard = (cardId: string, costGems: number) => {
@@ -149,28 +149,36 @@ const App: React.FC = () => {
     <div className="relative h-screen w-full bg-black text-white overflow-hidden flex flex-col max-w-lg mx-auto border-x border-zinc-900 shadow-2xl">
       
       {currentView === AppView.HOME && (
-        <header className="sticky top-0 z-[60] bg-black/95 backdrop-blur-2xl border-b border-zinc-900/50 animate-header-entry px-4 py-3 flex items-center justify-between">
-          <div className="flex flex-col gap-2">
-            <div onClick={() => setIsProfileModalOpen(true)} className="flex items-center gap-2.5 bg-[#1c1c1e] rounded-full pr-3.5 py-1 pl-1 cursor-pointer hover:bg-zinc-800 transition-all active:scale-95 shadow-lg">
-              <div className="w-8 h-8 rounded-full border border-teal-500/30 overflow-hidden bg-black"><img src={userProfile.avatar} className="w-full h-full rounded-full object-cover" alt="User" /></div>
-              <span className="text-[10px] font-bold text-zinc-100 uppercase tracking-tight leading-none">{userProfile.name}</span>
+        <header className="sticky top-0 z-[60] bg-black/95 backdrop-blur-2xl border-b border-zinc-900/50 animate-header-entry px-4 py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            <div onClick={() => setIsProfileModalOpen(true)} className="flex items-center gap-2 bg-[#1c1c1e] rounded-full pr-3 py-0.5 pl-0.5 cursor-pointer hover:bg-zinc-800 transition-all active:scale-95 shadow-lg border border-white/5">
+              <div className="w-7 h-7 rounded-full border border-teal-500/30 overflow-hidden bg-black shrink-0">
+                <img src={userProfile.avatar} className="w-full h-full rounded-full object-cover" alt="User" />
+              </div>
+              <span className="text-[10px] font-bold text-zinc-100 uppercase tracking-tight leading-none whitespace-nowrap">{userProfile.name}</span>
             </div>
             
-            {/* Fix: Removed 'xp' prop which is not defined in RankPillProps interface in RankPill.tsx */}
             <RankPill 
               rank={userProfile.rank} 
               onClick={() => setCurrentView(AppView.RANK_PROGRESSION)} 
             />
           </div>
 
-          <div className="flex items-center gap-4">
-            <div onClick={() => setCurrentView(AppView.STORE)} className="flex items-center bg-[#1c1c1e] rounded-full px-3 py-1.5 gap-3 cursor-pointer hover:bg-zinc-800 shadow-inner border border-white/5">
-              <div className="flex items-center gap-1.5"><Coins size={12} className="text-amber-500/80" /><span className="heading-font text-[13px] font-black tracking-tight text-zinc-300">{userProfile.coins}</span></div>
-              <div className="w-[1px] h-3 bg-zinc-800" /><div className="flex items-center gap-1.5"><Gem size={12} className="text-violet-500/80" /><span className="heading-font text-[13px] font-black tracking-tight text-zinc-300">{userProfile.gems}</span></div>
+          <div className="flex items-center gap-2 shrink-0">
+            <div onClick={() => setCurrentView(AppView.STORE)} className="flex items-center bg-[#1c1c1e] rounded-full px-2.5 py-1 gap-2.5 cursor-pointer hover:bg-zinc-800 shadow-inner border border-white/5">
+              <div className="flex items-center gap-1">
+                <Coins size={10} className="text-amber-500/80" />
+                <span className="heading-font text-[12px] font-black tracking-tight text-zinc-300">{userProfile.coins.toLocaleString()}</span>
+              </div>
+              <div className="w-[1px] h-3 bg-zinc-800" />
+              <div className="flex items-center gap-1">
+                <Gem size={10} className="text-violet-500/80" />
+                <span className="heading-font text-[12px] font-black tracking-tight text-zinc-300">{userProfile.gems.toLocaleString()}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setIsMissionsModalOpen(true)} className="p-1.5 text-zinc-600 hover:text-red-500 transition-colors active:scale-90"><Target size={18} /></button>
-            </div>
+            <button onClick={() => setIsMissionsModalOpen(true)} className="p-1.5 text-zinc-600 hover:text-red-500 transition-colors active:scale-90">
+              <Target size={18} />
+            </button>
           </div>
         </header>
       )}
@@ -193,7 +201,7 @@ const App: React.FC = () => {
       </main>
 
       {showBottomNav && (
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-black border-t border-zinc-800/50 flex items-center justify-between px-2 pt-3 pb-8 z-[60] shadow-[0_-10px_40px_rgba(0,0,0,0.8)]">
+        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-black border-t border-zinc-800/50 flex items-center justify-between px-2 pt-3 pb-8 z-[60] shadow-[0_-10px_40_rgba(0,0,0,0.8)]">
           {[
             { view: AppView.STORE, icon: StoreIcon, label: 'STORE' },
             { view: AppView.COLLECTIONS, icon: Library, label: 'COLLECTIONS' },

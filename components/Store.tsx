@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Coins, Gem, ShoppingBag, Frame, Package, PartyPopper } from 'lucide-react';
 import { MOCK_CARDS } from '../constants';
@@ -39,6 +38,12 @@ const FRAME_ITEMS = [
   { id: 'f5', name: 'ANGEL GOLD', gemPrice: 2500, asset: 'frame_angel_gold.png', color: '#FDE047', glow: 'rgba(253, 224, 71, 0.5)' },
   { id: 'f6', name: 'NEON PINK', gemPrice: 900, asset: 'frame_neon_pink.png', color: '#F472B6', glow: 'rgba(244, 114, 182, 0.6)' },
   { id: 'f7', name: 'NEON BLUE', gemPrice: 900, asset: 'frame_neon_blue.png', color: '#60A5FA', glow: 'rgba(96, 165, 250, 0.6)' },
+];
+
+const PACK_ITEMS = [
+  { id: 'p1', name: 'STRIKER PACK', gemPrice: 150, theme: 'from-blue-600 to-zinc-900', accent: 'blue' },
+  { id: 'p2', name: 'ELITE PACK', gemPrice: 600, theme: 'from-purple-600 to-zinc-900', accent: 'purple' },
+  { id: 'p3', name: 'LEGEND PACK', gemPrice: 2000, theme: 'from-amber-500 to-red-900', accent: 'amber' },
 ];
 
 interface StoreProps {
@@ -142,7 +147,6 @@ export const Store: React.FC<StoreProps> = ({
                   key={card.id} 
                   className={`flex flex-col rounded-[2.2rem] overflow-hidden border-2 transition-all relative group shadow-2xl active:scale-95 ${theme.border} ${theme.glow} ${theme.bg}`}
                 >
-                  {/* Card Body -> Open Preview */}
                   <div 
                     onClick={() => setPreviewCard(card)}
                     className="p-3 pb-0 cursor-pointer"
@@ -150,7 +154,6 @@ export const Store: React.FC<StoreProps> = ({
                     <Card card={card} className="w-full border-0 pointer-events-none" />
                   </div>
 
-                  {/* Red Footer CTA -> Unlock Flow */}
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
@@ -186,11 +189,8 @@ export const Store: React.FC<StoreProps> = ({
               key={item.id}
               className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] overflow-hidden flex flex-col transition-all hover:border-red-600/30 shadow-2xl active:scale-95 group"
             >
-              {/* Bold Frame Preview - High Contrast Logic */}
               <div className="p-8 pb-4 flex flex-col items-center gap-8">
                 <div className="relative w-44 h-44 flex items-center justify-center">
-                  
-                  {/* The Decisive Circular Ring (Requested Solution) */}
                   <div 
                     className="absolute inset-6 rounded-full border-[10px] shadow-[0_0_40px_rgba(0,0,0,0.9)] z-0"
                     style={{ 
@@ -198,11 +198,7 @@ export const Store: React.FC<StoreProps> = ({
                       boxShadow: `0 0 35px ${item.glow}`
                     }}
                   />
-                  
-                  {/* Subtle Inner Gradient for Depth */}
                   <div className="absolute inset-[34px] rounded-full bg-gradient-to-b from-zinc-800/20 to-zinc-950/60 pointer-events-none" />
-                  
-                  {/* Specific Frame Asset Overlay */}
                   <img 
                     src={`/assets/frames/${item.asset}`}
                     className="relative z-10 w-full h-full object-contain pointer-events-none drop-shadow-[0_10px_10px_rgba(0,0,0,0.8)] group-hover:scale-110 transition-transform duration-500"
@@ -216,13 +212,63 @@ export const Store: React.FC<StoreProps> = ({
                 </span>
               </div>
 
-              {/* Red Primary CTA Only - Diamonds Only Requirement */}
               <button 
                 className="mt-2 bg-red-600 hover:bg-red-500 border-t border-red-400/50 p-4 transition-colors flex items-center justify-center gap-2 group/cta"
               >
                 <Gem size={18} className="text-white drop-shadow-sm" fill="currentColor" />
                 <span className="heading-font text-2xl font-black text-white leading-none tracking-tight group-hover/cta:scale-105 transition-transform">
                   BUY {item.gemPrice}
+                </span>
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : activeTab === 'inventories' ? (
+        /* Redesigned Packs Tab */
+        <div className="grid grid-cols-2 gap-x-5 gap-y-10 animate-in slide-in-from-bottom-4 duration-500">
+          {PACK_ITEMS.map((pack) => (
+            <div 
+              key={pack.id}
+              className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] overflow-hidden flex flex-col transition-all hover:border-zinc-700 shadow-2xl active:scale-95 group"
+            >
+              {/* Pack Preview Visual - Foil-style pack centered */}
+              <div className="p-6 pb-2 flex flex-col items-center gap-4">
+                <div className="relative w-32 h-44 flex items-center justify-center">
+                  {/* The Physical Pack Visual (Foil Card Style) */}
+                  <div className={`w-full h-full rounded-2xl bg-gradient-to-br ${pack.theme} border-2 border-white/10 shadow-[0_15px_30px_rgba(0,0,0,0.6)] relative overflow-hidden flex flex-col items-center justify-center group-hover:scale-105 transition-transform duration-500`}>
+                    {/* Foil Shine Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-white/20 to-transparent pointer-events-none" />
+                    
+                    {/* Tier-specific glowing emblem */}
+                    <div className={`w-16 h-16 rounded-full bg-black/40 flex items-center justify-center border border-white/5 shadow-[0_0_20px_rgba(255,255,255,0.1)] mb-4`}>
+                      <Package className={`text-${pack.accent}-500`} size={28} />
+                    </div>
+
+                    <div className="absolute bottom-4 inset-x-0 px-2">
+                      <div className={`h-1 w-1/2 mx-auto rounded-full bg-${pack.accent}-500/50 shadow-[0_0_10px_rgba(0,0,0,0.5)]`} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center space-y-1 mt-2">
+                  <h4 className="heading-font text-xl font-black text-white italic tracking-tight uppercase leading-none">
+                    {pack.name}
+                  </h4>
+                  {/* Reward Description Text - Neutral & Informative */}
+                  <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest leading-none">
+                    Awards Cards, Gems, Card Backgrounds
+                  </p>
+                </div>
+              </div>
+
+              {/* Buy CTA - Gems Only */}
+              <button 
+                onClick={() => onPurchaseCard(pack.id, pack.gemPrice)}
+                className="mt-4 bg-red-600 hover:bg-red-500 border-t border-red-400/50 p-4 transition-colors flex items-center justify-center gap-2 group/cta"
+              >
+                <Gem size={14} className="text-white drop-shadow-sm" fill="currentColor" />
+                <span className="heading-font text-2xl font-black text-white leading-none tracking-tight group-hover/cta:scale-105 transition-transform">
+                  {pack.gemPrice} UNLOCK
                 </span>
               </button>
             </div>
@@ -262,6 +308,7 @@ export const Store: React.FC<StoreProps> = ({
           onClose={() => setPreviewCard(null)} 
           userGems={userGems}
           isStoreContext={true}
+          hideUpgrades={true}
         />
       )}
     </div>

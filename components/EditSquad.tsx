@@ -248,6 +248,7 @@ export const EditSquad: React.FC<EditSquadProps> = ({
           onUpgrade={(c) => onUpgrade(c.id, 0, 0)}
           squads={squads}
           activeSquadId={squad.id}
+          hideUpgrades={true}
           onToggleSquad={(c) => {
             toggleCard(c);
           }}

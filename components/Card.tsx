@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { PlayerCard } from '../types';
 import { Lock, Check, Sparkles } from 'lucide-react';
@@ -11,6 +10,7 @@ interface CardProps {
   progressionState?: 'unlocked' | 'next' | 'locked';
   stage?: number;
   minimal?: boolean;
+  showSparkle?: boolean;
 }
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1629285401299-497b4b10492c?auto=format&fit=crop&q=80&w=400&h=600';
@@ -26,7 +26,8 @@ export const Card: React.FC<CardProps> = ({
   isLocked = false,
   progressionState,
   stage = 0,
-  minimal = false
+  minimal = false,
+  showSparkle = false
 }) => {
   const [imgSrc, setImgSrc] = useState<string>(card.image || FALLBACK_IMAGE);
 
@@ -123,6 +124,14 @@ export const Card: React.FC<CardProps> = ({
         <div className="absolute inset-0 z-[6] pointer-events-none">
            <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 via-white/5 to-red-600/10 animate-shimmer" />
         </div>
+      )}
+
+      {/* PERSISTENT SPARKLE OVERLAY (ONLY FOR UPGRADED CARDS) */}
+      {showSparkle && stage > 0 && !effectiveIsLocked && (
+        <>
+          <div className="sparkle-layer" />
+          <div className="sparkle-layer sparkle-layer-stagger" />
+        </>
       )}
 
       {/* LOCKED PULSE GLOW */}

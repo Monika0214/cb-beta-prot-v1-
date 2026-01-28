@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,6 +49,97 @@
           height: 100%;
           background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.1), transparent);
           animation: shimmer 2s infinite;
+        }
+
+        /* --- YELLOW GLOW ANIMATION (LEVEL UI) --- */
+        @keyframes yellow-glow-pulse {
+          0%, 100% { 
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.6), inset 0 0 4px rgba(255, 255, 255, 0.2);
+            transform: scale(1);
+          }
+          50% { 
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.9), inset 0 0 8px rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+          }
+        }
+        .animate-yellow-glow {
+          animation: yellow-glow-pulse 2s infinite ease-in-out;
+        }
+
+        /* --- UPGRADE SHAKE ANIMATION --- */
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-4px) rotate(-1deg); }
+          50% { transform: translateX(4px) rotate(1deg); }
+          75% { transform: translateX(-4px) rotate(-1deg); }
+        }
+        .animate-shake {
+          animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes pulse-red {
+          0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+          70% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        .animate-pulse-red {
+          animation: pulse-red 1.5s infinite;
+        }
+
+        /* --- CARD UPGRADE POP --- */
+        @keyframes card-pop {
+          0% { transform: scale(0.95); filter: brightness(1); }
+          50% { transform: scale(1.08); filter: brightness(1.5) contrast(1.2); }
+          100% { transform: scale(1); filter: brightness(1); }
+        }
+        .animate-card-pop {
+          animation: card-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* --- HELPER FADE --- */
+        @keyframes helper-fade {
+          0% { opacity: 0; transform: translateY(10px); }
+          20% { opacity: 1; transform: translateY(0); }
+          80% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-10px); }
+        }
+        .animate-helper-fade {
+          animation: helper-fade 2.5s ease-in-out forwards;
+        }
+
+        /* --- REQUESTED SPARKLE BURST ANIMATION --- */
+        @keyframes sparkleBurst {
+          0% {
+            opacity: 0;
+            transform: scale(0.6) rotate(0deg);
+          }
+          20% {
+            opacity: 0.4;
+          }
+          100% {
+            opacity: 0;
+            transform: scale(1.4) rotate(25deg);
+          }
+        }
+
+        .sparkle-layer {
+          position: absolute;
+          inset: -20px;
+          pointer-events: none;
+          background-image:
+            radial-gradient(circle, rgba(255,255,255,0.9) 0 2px, transparent 3px),
+            radial-gradient(circle, rgba(255,215,120,0.8) 0 2px, transparent 3px),
+            radial-gradient(circle, rgba(255,255,255,0.7) 0 1.5px, transparent 3px);
+          background-size: 60px 60px;
+          animation: sparkleBurst 2.5s ease-out infinite;
+          mix-blend-mode: screen;
+          z-index: 15;
+        }
+
+        .sparkle-layer-stagger {
+          animation-delay: 1.2s;
+          background-size: 45px 45px;
+          opacity: 0.2;
         }
 
         /* --- EXISTING ANIMATIONS --- */
