@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Swords, Users, MapPin, Shield, Trophy, Target, Activity, Flame, AlertCircle, Edit2, AlertTriangle, Plus, Lock, Zap, Coins, CheckCircle2 } from 'lucide-react';
-import { MOCK_REGIONS, MOCK_SQUADS, EMBLEMS } from '../constants';
+import { MOCK_REGIONS, MOCK_SQUADS, EMBLEMS, ExtendedRegion } from '../constants';
 import { Modal } from './Modal';
 import { Region, Squad, AppView } from '../types';
 
@@ -37,11 +37,11 @@ const CAROUSEL_ITEMS = [
 ];
 
 export const Home: React.FC<HomeProps> = ({ setView, startBrawl, squads, activeSquadId, onSelectSquad, onEditSquad, userLevel = 5 }) => {
-  // Always default to the first unlocked region (Dubai)
   const [selectedRegion, setSelectedRegion] = useState<Region>(MOCK_REGIONS[0]); 
   const [isRegionModalOpen, setIsRegionModalOpen] = useState(false);
   const [isSquadSelectorOpen, setIsSquadSelectorOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [lockedFeedback, setLockedFeedback] = useState<string | null>(null);
   const autoScrollRef = useRef<number | null>(null);
 
   const activeSquad = useMemo(() => {
@@ -66,6 +66,17 @@ export const Home: React.FC<HomeProps> = ({ setView, startBrawl, squads, activeS
       if (autoScrollRef.current) clearInterval(autoScrollRef.current);
     };
   }, []);
+
+  const handleRegionTap = (region: ExtendedRegion) => {
+    const isLocked = (userLevel || 0) < region.unlockLevel;
+    if (isLocked) {
+      setLockedFeedback(`Reach Level ${region.unlockLevel} to unlock this arena.`);
+      setTimeout(() => setLockedFeedback(null), 2000);
+    } else {
+      setSelectedRegion(region);
+      setIsRegionModalOpen(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-black relative overflow-hidden grain-texture">
@@ -159,91 +170,116 @@ export const Home: React.FC<HomeProps> = ({ setView, startBrawl, squads, activeS
       </div>
 
       <Modal isOpen={isRegionModalOpen} onClose={() => setIsRegionModalOpen(false)} title="Arena Selector">
-        <div className="flex flex-col gap-4 py-2 overflow-y-auto no-scrollbar max-h-[70vh]">
-          {MOCK_REGIONS.map((region) => {
-            const isLocked = (userLevel || 0) < region.unlockLevel;
-            const isSelected = selectedRegion.id === region.id;
-            const isIndia = region.country === 'INDIA';
+        <div className="flex flex-col max-h-[75vh] relative no-scrollbar">
+          
+          {/* Locked Arena Feedback Toast */}
+          {lockedFeedback && (
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 z-[110] bg-zinc-950 border border-red-600/50 px-6 py-3 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
+              <p className="heading-font text-lg font-black text-red-500 italic uppercase tracking-widest text-center">{lockedFeedback}</p>
+            </div>
+          )}
 
-            return (
-              <div 
-                key={region.id}
-                onClick={() => { 
-                  if (!isLocked) {
-                    setSelectedRegion(region); 
-                    setIsRegionModalOpen(false); 
-                  }
-                }}
-                className={`relative flex flex-col gap-4 p-5 rounded-2xl transition-all duration-300 border-l-4 ${
-                  isLocked 
-                    ? 'bg-zinc-950 border-transparent opacity-60 cursor-not-allowed' 
-                    : isSelected 
-                      ? 'bg-zinc-900 border-red-600 shadow-[0_10px_30px_rgba(0,0,0,0.5),0_0_20px_rgba(220,38,38,0.1)] ring-1 ring-white/10 cursor-default' 
-                      : 'bg-zinc-900/30 border-transparent hover:bg-zinc-800/60 hover:-translate-y-0.5 cursor-pointer'
-                }`}
-              >
-                {/* Row 1: IDENTITY */}
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 shrink-0 rounded-xl overflow-hidden border border-zinc-800/50 shadow-sm ${isLocked ? 'grayscale opacity-40' : ''}`}>
-                    <img src={region.flag} className="w-full h-full object-cover" alt="" />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h5 className={`heading-font text-2xl font-black leading-none uppercase tracking-tight truncate ${isLocked ? 'text-zinc-700' : 'text-zinc-100'}`}>
-                      {region.country}
-                    </h5>
-                    <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${isLocked ? 'text-zinc-800' : 'text-red-600 italic'}`}>
-                      {isLocked ? 'LOCKED' : 'ARENA OPEN'}
-                    </p>
-                  </div>
+          <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-4 py-2 px-1">
+            {MOCK_REGIONS.map((region) => {
+              const r = region as ExtendedRegion;
+              const isLocked = (userLevel || 0) < r.unlockLevel;
+              const isSelected = selectedRegion.id === r.id;
 
-                  {!isLocked && (
-                    <div className="flex flex-col items-end shrink-0">
-                      <span className="heading-font text-lg font-black text-zinc-400 leading-none">{region.playersCount}</span>
-                      <span className="text-[7px] font-black text-zinc-700 uppercase tracking-tighter">Live</span>
+              return (
+                <div 
+                  key={r.id}
+                  onClick={() => handleRegionTap(r)}
+                  className={`relative flex flex-col p-6 rounded-[2.5rem] transition-all duration-200 border-2 overflow-hidden ${
+                    isLocked 
+                      ? 'bg-zinc-900/10 border-zinc-900' 
+                      : isSelected 
+                        ? 'bg-red-600/5 border-red-600 shadow-[0_15px_40px_rgba(220,38,38,0.15)] ring-1 ring-red-600/30' 
+                        : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-700 cursor-pointer active:scale-[0.98]'
+                  }`}
+                >
+                  {/* Row 1: Country + Flag & Status/Lock */}
+                  <div className="flex items-center justify-between gap-4 w-full">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className={`w-12 h-12 shrink-0 rounded-2xl overflow-hidden border border-white/5 shadow-inner ${isLocked ? 'grayscale opacity-50' : ''}`}>
+                        <img src={r.flag} className="w-full h-full object-cover" alt="" />
+                      </div>
+                      <h5 className={`heading-font text-3xl font-black leading-none uppercase tracking-tight truncate ${isLocked ? 'text-zinc-600' : 'text-zinc-100'}`}>
+                        {r.country}
+                      </h5>
                     </div>
-                  )}
-                  {isLocked && <Lock size={16} className="text-zinc-900" />}
+                    
+                    {!isLocked ? (
+                      <div className="bg-red-600 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-lg shadow-red-900/20 shrink-0">
+                        <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                        <span className="heading-font text-lg font-black text-white leading-none tracking-widest">LIVE</span>
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-zinc-700">
+                        <Lock size={20} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Row 2: Unlock Message or Sub-heading */}
+                  <div className="mt-4 min-h-[40px] flex items-center">
+                    {isLocked ? (
+                      <div className="flex items-center gap-3">
+                        <div className="h-0.5 w-6 bg-red-600/30" />
+                        <p className="heading-font text-2xl font-black text-red-600 italic uppercase tracking-widest">
+                          Unlocks at Level {r.unlockLevel}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] font-black text-zinc-500 uppercase tracking-[0.3em] italic">
+                        {r.rewardHint}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Row 3: Stats Grid */}
+                  <div className={`mt-6 pt-5 border-t ${isLocked ? 'border-zinc-900' : 'border-white/5'} flex items-center justify-between`}>
+                    <div className="flex items-center gap-8">
+                      {/* Entry Fee */}
+                      <div className="flex flex-col items-center gap-1">
+                         <div className="flex items-center gap-1.5">
+                           <Coins size={14} className={isLocked ? 'text-zinc-700' : 'text-amber-500'} />
+                           <span className={`heading-font text-3xl font-black leading-none ${isLocked ? 'text-zinc-700' : 'text-white'}`}>{r.entryFee}</span>
+                         </div>
+                         <span className="text-[7px] font-black text-zinc-700 uppercase tracking-widest">ENTRY</span>
+                      </div>
+                      
+                      {/* Stadiums */}
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin size={12} className={isLocked ? 'text-zinc-700' : 'text-purple-500'} />
+                          <span className={`heading-font text-3xl font-black leading-none ${isLocked ? 'text-zinc-700' : 'text-white'}`}>{r.stadiumCount}</span>
+                        </div>
+                        <span className="text-[7px] font-black text-zinc-700 uppercase tracking-widest">STADIUMS</span>
+                      </div>
+
+                      {/* Energy */}
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-1.5">
+                           <Zap size={14} className={isLocked ? 'text-zinc-700' : 'text-blue-500'} />
+                           <span className={`heading-font text-3xl font-black leading-none ${isLocked ? 'text-zinc-700' : 'text-white'}`}>
+                            +{r.energyReward}
+                           </span>
+                        </div>
+                        <span className="text-[7px] font-black text-zinc-700 uppercase tracking-widest">ENERGY</span>
+                      </div>
+                    </div>
+
+                    {!isLocked && isSelected && (
+                      <div className="flex items-center gap-2 text-red-600 px-4 py-2 rounded-2xl bg-red-600/10 border border-red-600/30 shrink-0">
+                        <CheckCircle2 size={18} />
+                        <span className="heading-font text-xl font-black uppercase tracking-tighter">READY</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-
-                {/* INDIA SPECIFIC METADATA */}
-                {isIndia && (
-                  <p className={`text-[9px] font-black uppercase tracking-[0.2em] -mt-1 ${isLocked ? 'text-zinc-800' : 'text-zinc-500'}`}>
-                    MULTIPLE ARENAS AVAILABLE
-                  </p>
-                )}
-
-                {/* STATS ROW (ONLY FOR UNLOCKED) */}
-                {!isLocked && (
-                  <div className="flex items-center gap-6 pt-4 border-t border-white/5">
-                    <div className="flex items-center gap-2">
-                      <Coins size={14} className="text-amber-500/80" />
-                      <span className="heading-font text-xl font-black text-zinc-300">{region.entryFee}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Zap size={14} className="text-blue-500/80" />
-                      <span className="heading-font text-xl font-black text-zinc-300">{region.energyReward}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <span className="text-base grayscale brightness-200 contrast-50 opacity-40 italic">🏟</span>
-                      <span className="heading-font text-xl font-black text-zinc-300">{region.stadiumCount}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* UNLOCK MESSAGE (FOR LOCKED) */}
-                {isLocked && (
-                  <div className="pt-2 border-t border-zinc-900/50">
-                    <p className="text-[10px] font-black text-zinc-800 uppercase tracking-widest text-center">
-                      UNLOCKS AT LEVEL {region.unlockLevel}
-                    </p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </Modal>
 

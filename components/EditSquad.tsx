@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft, Trash2, Shield, Plus, Check, Zap, Trophy, Swords, Target, Activity, Flame, X, Edit2, AlertCircle } from 'lucide-react';
 import { MOCK_CARDS } from '../constants';
@@ -13,6 +14,8 @@ interface EditSquadProps {
   // Adding missing props for CardPreview integration
   userCoins: number;
   userEnergy: number;
+  userGems: number;
+  userLevel?: number;
   cardUpgrades: Record<string, number>;
   onUpgrade: (cardId: string, coins: number, energy: number) => void;
 }
@@ -41,6 +44,8 @@ export const EditSquad: React.FC<EditSquadProps> = ({
   onBack,
   userCoins,
   userEnergy,
+  userGems,
+  userLevel = 1,
   cardUpgrades,
   onUpgrade
 }) => {
@@ -233,18 +238,19 @@ export const EditSquad: React.FC<EditSquadProps> = ({
         </section>
       </div>
 
-      {/* Global Card Preview Overlay */}
       {previewCard && (
         <CardPreview 
           card={previewCard} 
-          squads={squads} 
-          activeSquadId={squad.id}
-          onUpdateSquad={onUpdateSquad}
           onClose={() => setPreviewCard(null)} 
-          userCoins={userCoins}
-          userEnergy={userEnergy}
-          currentStage={cardUpgrades[previewCard.id] || 0}
-          onUpgrade={onUpgrade}
+          userGems={userGems}
+          userLevel={userLevel}
+          cardUpgrades={cardUpgrades[previewCard.id] || 0}
+          onUpgrade={(c) => onUpgrade(c.id, 0, 0)}
+          squads={squads}
+          activeSquadId={squad.id}
+          onToggleSquad={(c) => {
+            toggleCard(c);
+          }}
         />
       )}
 

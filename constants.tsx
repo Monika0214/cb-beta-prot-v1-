@@ -8,6 +8,11 @@ export interface ExtendedPlayerCard extends PlayerCard {
   unlockLevel: number;
 }
 
+export interface ExtendedRegion extends Region {
+  rewardHint: string;
+  themeColor: string;
+}
+
 export const MOCK_CARDS: ExtendedPlayerCard[] = [
   { 
     id: '1', name: 'Mithali Raj', cost: 6, runs: 95, rarity: 'Legendary', unlockLevel: 1,
@@ -111,7 +116,7 @@ export const MOCK_CARDS: ExtendedPlayerCard[] = [
   },
 ];
 
-export const MOCK_REGIONS: Region[] = [
+export const MOCK_REGIONS: ExtendedRegion[] = [
   { 
     id: 'uae', 
     name: 'DUBAI', 
@@ -122,9 +127,11 @@ export const MOCK_REGIONS: Region[] = [
     stadiumCount: 1, 
     flag: 'https://purecatamphetamine.github.io/country-flag-icons/3x2/AE.svg',
     energyReward: 2,
-    unlockLevel: 1, // THE SINGLE OPEN REGION
+    unlockLevel: 1,
     image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&q=80&w=800',
-    risk: 'Low'
+    risk: 'Low',
+    rewardHint: 'Low Entry • Starter Turf',
+    themeColor: 'rgba(220, 38, 38, 0.1)'
   },
   { 
     id: 'sl', 
@@ -138,7 +145,9 @@ export const MOCK_REGIONS: Region[] = [
     energyReward: 3,
     unlockLevel: 10,
     image: 'https://images.unsplash.com/photo-1588714023644-039659ec4002?auto=format&fit=crop&q=80&w=800',
-    risk: 'Low'
+    risk: 'Low',
+    rewardHint: 'Better Multipliers • High Yield',
+    themeColor: 'rgba(59, 130, 246, 0.1)'
   },
   { 
     id: 'ind', 
@@ -152,7 +161,9 @@ export const MOCK_REGIONS: Region[] = [
     energyReward: 5,
     unlockLevel: 20,
     image: 'https://images.unsplash.com/photo-1593341646782-e0b495cff86d?auto=format&fit=crop&q=80&w=800',
-    risk: 'Low'
+    risk: 'Low',
+    rewardHint: 'Vast Arenas • Huge Energy Rewards',
+    themeColor: 'rgba(245, 158, 11, 0.1)'
   },
   { 
     id: 'eng', 
@@ -166,7 +177,9 @@ export const MOCK_REGIONS: Region[] = [
     energyReward: 10,
     unlockLevel: 30,
     image: 'https://images.unsplash.com/photo-1624192132371-367288e67f08?auto=format&fit=crop&q=80&w=800',
-    risk: 'Medium'
+    risk: 'Medium',
+    rewardHint: 'Premium Stakes • Global Exposure',
+    themeColor: 'rgba(30, 64, 175, 0.1)'
   },
   { 
     id: 'aus', 
@@ -180,7 +193,9 @@ export const MOCK_REGIONS: Region[] = [
     energyReward: 18,
     unlockLevel: 40,
     image: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&q=80&w=800',
-    risk: 'Medium'
+    risk: 'Medium',
+    rewardHint: 'Brutal Competition • Elite Loot',
+    themeColor: 'rgba(234, 179, 8, 0.1)'
   },
   { 
     id: 'za', 
@@ -194,7 +209,9 @@ export const MOCK_REGIONS: Region[] = [
     energyReward: 28,
     unlockLevel: 50,
     image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=1200',
-    risk: 'High'
+    risk: 'High',
+    rewardHint: 'High Stakes • Legendary Drops',
+    themeColor: 'rgba(5, 150, 105, 0.1)'
   },
   { 
     id: 'glo', 
@@ -208,7 +225,9 @@ export const MOCK_REGIONS: Region[] = [
     energyReward: 45,
     unlockLevel: 60,
     image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=1200',
-    risk: 'High'
+    risk: 'High',
+    rewardHint: 'Ultimate Glory • Unlimited Potential',
+    themeColor: 'rgba(124, 58, 237, 0.1)'
   },
 ];
 

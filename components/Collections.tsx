@@ -31,6 +31,7 @@ interface CollectionsProps {
   userProfile: any;
   cardUpgrades: Record<string, number>;
   onUpgradeCard: (cardId: string, coins: number, energy: number) => void;
+  customCards?: PlayerCard[];
 }
 
 export const Collections: React.FC<CollectionsProps> = ({ 
@@ -42,19 +43,22 @@ export const Collections: React.FC<CollectionsProps> = ({
   onUpdateSquad,
   userProfile,
   cardUpgrades,
-  onUpgradeCard
+  onUpgradeCard,
+  customCards
 }) => {
   const [previewCard, setPreviewCard] = useState<PlayerCard | null>(null);
 
+  const displayCards = customCards || MOCK_CARDS;
+
   const groupedCards = useMemo(() => {
     const groups: Record<number, PlayerCard[]> = {};
-    MOCK_CARDS.forEach(card => {
+    displayCards.forEach(card => {
       const cost = card.cost;
       if (!groups[cost]) groups[cost] = [];
       groups[cost].push(card);
     });
     return groups;
-  }, []);
+  }, [displayCards]);
 
   const sortedCosts = useMemo(() => Object.keys(groupedCards).map(Number).sort((a, b) => a - b), [groupedCards]);
 
@@ -81,7 +85,7 @@ export const Collections: React.FC<CollectionsProps> = ({
 
       {activeTab === 'players' ? (
         <div className="flex flex-col gap-10">
-          {sortedCosts.map((cost) => (
+          {sortedCosts.length > 0 ? sortedCosts.map((cost) => (
             <section key={cost} className="flex flex-col gap-4">
               <div className="flex items-center gap-2 border-b border-zinc-900 pb-2">
                 <Zap size={14} className="text-zinc-600" fill="currentColor" />
@@ -90,12 +94,14 @@ export const Collections: React.FC<CollectionsProps> = ({
               <div className="grid grid-cols-2 gap-x-5 gap-y-10">
                 {groupedCards[cost].map((card) => (
                   <div key={card.id} className="flex flex-col gap-3 cursor-pointer hover:scale-105 active:scale-95 transition-transform" onClick={() => setPreviewCard(card)}>
-                    <Card card={card} className="shadow-2xl" />
+                    <Card card={card} className="shadow-2xl" stage={cardUpgrades[card.id] || 0} />
                   </div>
                 ))}
               </div>
             </section>
-          ))}
+          )) : (
+            <div className="py-20 text-center text-zinc-600 heading-font text-xl uppercase italic">No players in collection.</div>
+          )}
         </div>
       ) : (
         <div className="grid gap-4">
@@ -108,7 +114,6 @@ export const Collections: React.FC<CollectionsProps> = ({
                 onClick={() => onEditSquad(squad.id)} 
                 className="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] p-6 flex flex-col h-[180px] overflow-hidden hover:border-zinc-700 transition-all cursor-pointer group shrink-0"
               >
-                {/* 1. SQUAD HEADER (STATIC) */}
                 <div className="flex justify-between items-start shrink-0 mb-auto">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-zinc-950 rounded-2xl flex items-center justify-center border border-zinc-800 text-zinc-500 transition-transform group-hover:scale-110">
@@ -124,10 +129,8 @@ export const Collections: React.FC<CollectionsProps> = ({
                   </div>
                 </div>
 
-                {/* 2. CARD RAIL WRAPPER (FIXED HEIGHT) */}
                 <div className="h-[74px] w-full shrink-0 overflow-hidden flex items-center">
                   {squad.cards.length > 0 ? (
-                    /* 3. CARD RAIL (HORIZONTAL SCROLL ONLY) */
                     <div 
                       className="flex gap-2 overflow-x-auto overflow-y-hidden no-scrollbar py-1 w-full flex-nowrap"
                       onClick={(e) => e.stopPropagation()}
@@ -160,15 +163,12 @@ export const Collections: React.FC<CollectionsProps> = ({
       {previewCard && (
         <CardPreview 
           card={previewCard} 
-          squads={squads} 
-          activeSquadId={activeSquadId} 
-          onUpdateSquad={onUpdateSquad} 
           onClose={() => setPreviewCard(null)}
-          userCoins={userProfile.coins}
-          userEnergy={userProfile.energyDrinks}
-          currentStage={cardUpgrades[previewCard.id] || 0}
-          onUpgrade={onUpgradeCard}
-          hideSquadActions={activeTab === 'players'}
+          userGems={userProfile.gems}
+          userLevel={userProfile.level}
+          cardUpgrades={cardUpgrades[previewCard.id] || 0}
+          onUpgrade={(c) => onUpgradeCard(c.id, 0, 0)} // Placeholder cost
+          squads={squads}
         />
       )}
     </div>

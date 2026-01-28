@@ -10,6 +10,7 @@ interface CardProps {
   isLocked?: boolean;
   progressionState?: 'unlocked' | 'next' | 'locked';
   stage?: number;
+  minimal?: boolean;
 }
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1629285401299-497b4b10492c?auto=format&fit=crop&q=80&w=400&h=600';
@@ -24,7 +25,8 @@ export const Card: React.FC<CardProps> = ({
   style, 
   isLocked = false,
   progressionState,
-  stage = 0
+  stage = 0,
+  minimal = false
 }) => {
   const [imgSrc, setImgSrc] = useState<string>(card.image || FALLBACK_IMAGE);
 
@@ -143,20 +145,22 @@ export const Card: React.FC<CardProps> = ({
         }}
       />
       
-      <div className="absolute top-0 left-0 right-0 p-2 flex justify-between items-start z-20 pointer-events-none">
-        <div className="bg-black/90 backdrop-blur-md px-2 py-1 rounded-lg border border-zinc-700 shadow-xl flex items-center gap-1">
-          <span className="heading-font text-base font-black text-white leading-none">{card.cost}</span>
-          <span className="text-[10px] font-black text-yellow-500">⚡</span>
-        </div>
-        {!effectiveIsLocked && !isUnlockedBW && (
-          <div className="bg-black/90 backdrop-blur-md px-2 py-1 rounded-lg border border-red-600/50 shadow-xl flex items-center gap-1">
-            <span className="heading-font text-base font-black text-red-500 leading-none">
-              {card.runs + (stage * 5)}
-            </span>
-            <span className="text-[10px] font-black text-white">R</span>
+      {!minimal && (
+        <div className="absolute top-0 left-0 right-0 p-2 flex justify-between items-start z-20 pointer-events-none">
+          <div className="bg-black/90 backdrop-blur-md px-2 py-1 rounded-lg border border-zinc-700 shadow-xl flex items-center gap-1">
+            <span className="heading-font text-base font-black text-white leading-none">{card.cost}</span>
+            <span className="text-[10px] font-black text-yellow-500">⚡</span>
           </div>
-        )}
-      </div>
+          {!effectiveIsLocked && !isUnlockedBW && (
+            <div className="bg-black/90 backdrop-blur-md px-2 py-1 rounded-lg border border-red-600/50 shadow-xl flex items-center gap-1">
+              <span className="heading-font text-base font-black text-red-500 leading-none">
+                {card.runs + (stage * 5)}
+              </span>
+              <span className="text-[10px] font-black text-white">R</span>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30 z-10 pointer-events-none" />
 
@@ -180,14 +184,16 @@ export const Card: React.FC<CardProps> = ({
         <h4 className="heading-font text-xl font-black text-white leading-none uppercase tracking-tight text-center drop-shadow-[0_2px_4px_rgba(0,0,0,1)] w-full truncate italic">
           {card.name}
         </h4>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] opacity-90 drop-shadow-md">
-            {card.rarity}
-          </span>
-          {stage > 0 && (
-             <span className="text-[9px] font-black text-red-500 bg-red-600/10 px-1.5 rounded uppercase tracking-tighter">LVL {stage}</span>
-          )}
-        </div>
+        {!minimal && (
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] opacity-90 drop-shadow-md">
+              {card.rarity}
+            </span>
+            {stage > 0 && (
+               <span className="text-[9px] font-black text-red-500 bg-red-600/10 px-1.5 rounded uppercase tracking-tighter">LVL {stage}</span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

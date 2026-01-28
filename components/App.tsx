@@ -58,6 +58,7 @@ const App: React.FC = () => {
     wins: 128
   });
 
+  const [ownedCardIds, setOwnedCardIds] = useState<string[]>(['1', '2', '3', '4', '5', '6']);
   const [cardUpgrades, setCardUpgrades] = useState<Record<string, number>>({});
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
@@ -92,6 +93,12 @@ const App: React.FC = () => {
     }));
   };
 
+  const handlePurchaseCard = (cardId: string, costGems: number) => {
+    if (userProfile.gems < costGems) return;
+    setUserProfile(prev => ({ ...prev, gems: prev.gems - costGems }));
+    setOwnedCardIds(prev => [...prev, cardId]);
+  };
+
   const startBrawl = (region: Region) => {
     setActiveMatch({
       opponent: { name: 'DarkKnight_99', level: 7, avatar: 'https://images.unsplash.com/photo-1624192132371-367288e67f08?auto=format&fit=crop&q=80&w=200&h=200', squadPower: 245 },
@@ -103,13 +110,15 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case AppView.HOME: return <Home setView={setCurrentView} startBrawl={startBrawl} squads={squads} activeSquadId={activeSquadId} onSelectSquad={setActiveSquadId} onEditSquad={handleEditSquad} userLevel={userProfile.level} />;
-      case AppView.COLLECTIONS: return <Collections userProfile={userProfile} cardUpgrades={cardUpgrades} onUpgradeCard={handleUpgradeCard} onEditSquad={handleEditSquad} activeTab={collectionsTab} setActiveTab={setCollectionsTab} squads={squads} activeSquadId={activeSquadId} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} />;
+      case AppView.COLLECTIONS: 
+        const ownedCards = MOCK_CARDS.filter(c => ownedCardIds.includes(c.id));
+        return <Collections userProfile={userProfile} cardUpgrades={cardUpgrades} onUpgradeCard={handleUpgradeCard} onEditSquad={handleEditSquad} activeTab={collectionsTab} setActiveTab={setCollectionsTab} squads={squads} activeSquadId={activeSquadId} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} customCards={ownedCards} />;
       case AppView.LEADERBOARD: return <Leaderboard />;
       case AppView.FRIENDS: return <Friends onNavigate={(v, p) => { if (p) setSelectedProfile(p); setCurrentView(v); }} />;
-      case AppView.STORE: return <Store />;
+      case AppView.STORE: return <Store ownedCardIds={ownedCardIds} onPurchaseCard={handlePurchaseCard} userGems={userProfile.gems} squads={squads} activeSquadId={activeSquadId} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} />;
       case AppView.RANK_PROGRESSION: return <RankProgression onClose={handleBack} rank={userProfile.rank} xp={userProfile.xp} />;
       case AppView.COLLECTION_LEVEL: return <LevelProgression onClose={handleBack} level={userProfile.level} xp={userProfile.xp} />;
-      case AppView.EDIT_SQUAD: return <EditSquad squadId={editingSquadId} squads={squads} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} onBack={handleBack} userCoins={userProfile.coins} userEnergy={userProfile.energyDrinks} cardUpgrades={cardUpgrades} onUpgrade={handleUpgradeCard} />;
+      case AppView.EDIT_SQUAD: return <EditSquad squadId={editingSquadId} squads={squads} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} onBack={handleBack} userCoins={userProfile.coins} userEnergy={userProfile.energyDrinks} userGems={userProfile.gems} cardUpgrades={cardUpgrades} onUpgrade={handleUpgradeCard} />;
       case AppView.MATCHMAKING: return <Matchmaking opponent={activeMatch?.opponent} region={activeMatch?.region} onDeductFee={(a) => setUserProfile(p => ({ ...p, coins: p.coins - a }))} onStart={() => setCurrentView(AppView.GAMEPLAY)} />;
       case AppView.GAMEPLAY: return <Gameplay match={activeMatch!} onComplete={() => setCurrentView(AppView.MATCH_STATS)} />;
       case AppView.MATCH_STATS: return <MatchStats match={activeMatch!} onBrawlAgain={() => startBrawl(activeMatch!.region)} onExit={() => setCurrentView(AppView.HOME)} />;

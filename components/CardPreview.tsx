@@ -1,275 +1,204 @@
 
-import React, { useMemo, useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle2, Lock, Gem, ChevronRight, Zap, Target, Sparkles, TrendingUp, ShieldInfo, Users, Info } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { ArrowLeft, Gem, Lock, Check, Zap, Library, Sparkles, BookOpen } from 'lucide-react';
 import { PlayerCard, Squad } from '../types';
 import { Card } from './Card';
 
 interface CardPreviewProps {
   card: PlayerCard;
-  squads: Squad[];
-  activeSquadId: string;
-  onUpdateSquad: (squad: Squad) => void;
   onClose: () => void;
-  userCoins: number;
-  userEnergy: number;
-  currentStage: number; // 0 to 4
-  onUpgrade: (cardId: string, coins: number, energy: number) => void;
-  hideSquadActions?: boolean;
+  userGems: number;
+  userLevel?: number;
+  cardUpgrades?: number; // Number of upgrades already purchased for this card
+  onUpgrade?: (card: PlayerCard) => void;
+  // Contextual props
+  isStoreContext?: boolean;
+  squads?: Squad[];
+  activeSquadId?: string;
+  onToggleSquad?: (card: PlayerCard) => void;
 }
 
-interface StageDetail {
-  id: number;
-  title: string;
-  description: string;
-  gemCost: number;
-  unlockLevel: number;
-  statPreview: string;
-}
-
-const STAGES: StageDetail[] = [
-  { id: 1, title: 'Tactical Edge', description: 'Increases base run potency for high-stakes balls.', gemCost: 250, unlockLevel: 1, statPreview: '+5 Runs' },
-  { id: 2, title: 'Ability Surge', description: 'Enhances ability trigger efficiency and consistency.', gemCost: 500, unlockLevel: 5, statPreview: 'Ability+' },
-  { id: 3, title: 'Visual Prestige', description: 'Unlocks the Radiant Aura and Emerald Frame.', gemCost: 1000, unlockLevel: 10, statPreview: 'Visuals' },
-  { id: 4, title: 'Legendary Form', description: 'The ultimate evolution. Exclusive art and stats.', gemCost: 2500, unlockLevel: 20, statPreview: 'Max Stats' },
+const UPGRADE_DEFINITIONS = [
+  { id: 'tactical', name: 'Tactical', levelReq: 1, icon: Zap },
+  { id: 'lore', name: 'Lore', levelReq: 10, icon: BookOpen },
+  { id: 'cosmetic', name: 'Cosmetic Border', levelReq: 20, icon: Library },
+  { id: 'variant', name: 'Variant Art', levelReq: 35, icon: Sparkles },
 ];
+
+const RARITY_PRICES: Record<string, number> = {
+  Legendary: 3500,
+  Epic: 1250,
+  Rare: 450,
+  Common: 150
+};
 
 export const CardPreview: React.FC<CardPreviewProps> = ({ 
   card, 
-  squads, 
-  activeSquadId, 
-  onUpdateSquad, 
   onClose,
-  userCoins, 
-  currentStage, 
+  userGems,
+  userLevel = 1,
+  cardUpgrades = 0,
   onUpgrade,
-  hideSquadActions = false
+  isStoreContext = false,
+  squads = [],
+  activeSquadId,
+  onToggleSquad
 }) => {
-  const SQUAD_SIZE = 12;
-  const [selectedStageIdx, setSelectedStageIdx] = useState(Math.min(currentStage, 3));
-  const [animatingUpgrade, setAnimatingUpgrade] = useState(false);
+  const gemCost = RARITY_PRICES[card.rarity] || 150;
 
-  const targetSquad = useMemo(() => squads.find(s => s.id === activeSquadId) || squads[0], [squads, activeSquadId]);
-  const isInTargetSquad = useMemo(() => targetSquad?.cards.some(c => c.id === card.id) || false, [targetSquad, card.id]);
-  const isFull = (targetSquad?.cards.length || 0) >= SQUAD_SIZE;
-
-  const usedInSquads = useMemo(() => {
-    return squads.filter(s => s.cards.some(c => c.id === card.id)).map(s => s.name);
-  }, [squads, card.id]);
-
-  const handleUpgradeClick = () => {
-    const nextToUpgrade = STAGES[currentStage];
-    if (!nextToUpgrade || userCoins < nextToUpgrade.gemCost || animatingUpgrade) return;
-    
-    setAnimatingUpgrade(true);
-    setTimeout(() => {
-      onUpgrade(card.id, nextToUpgrade.gemCost, 0);
-      setAnimatingUpgrade(false);
-      if (currentStage < 3) {
-        setSelectedStageIdx(currentStage + 1);
-      }
-    }, 900);
+  const getAbilityLabel = (type?: string) => {
+    if (type === 'ON REVEAL') return 'ON REVEAL';
+    if (type === 'ONGOING') return 'ONGOING';
+    return 'NORMAL';
   };
 
-  const selectedStage = STAGES[selectedStageIdx];
-  const isSelectedStageCompleted = currentStage > selectedStageIdx;
-  const isSelectedStageCurrent = currentStage === selectedStageIdx;
-  const isSelectedStageLocked = currentStage < selectedStageIdx;
+  const handleAction = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onToggleSquad) {
+      onToggleSquad(card);
+    }
+  };
 
-  const currentRuns = card.runs + (currentStage * 5);
-  const nextRuns = currentRuns + 5;
+  const handleUpgrade = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onUpgrade) onUpgrade(card);
+  };
 
   return (
-    <div className="fixed inset-0 z-[120] bg-zinc-950 flex flex-col items-center justify-center animate-in fade-in duration-300 overflow-hidden h-screen max-h-screen">
-      <div className={`absolute inset-0 transition-all duration-1000 ${animatingUpgrade ? 'bg-red-600/20' : 'bg-black opacity-80'}`} />
+    <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center animate-in fade-in duration-300 overflow-hidden h-screen max-h-screen select-none">
       
-      <div className="w-full max-w-lg h-full flex flex-col relative overflow-hidden z-10">
+      {/* Static Header */}
+      <header className="w-full px-6 h-16 flex items-center justify-between shrink-0 relative z-10 border-b border-white/5">
+        <button onClick={onClose} className="p-2 -ml-2 text-zinc-600 hover:text-white transition-colors">
+          <ArrowLeft size={24} />
+        </button>
         
-        {/* HEADER */}
-        <header className="px-6 h-[64px] flex items-center justify-between shrink-0 bg-transparent">
-          <button onClick={onClose} className="p-3 -ml-3 text-zinc-500 hover:text-white transition-colors bg-zinc-900/50 rounded-full">
-            <ArrowLeft size={20} />
-          </button>
-          <div className="flex items-center gap-2 bg-zinc-900 px-4 py-1.5 rounded-full border border-zinc-800 shadow-xl">
-            <Gem size={14} className="text-violet-400" />
-            <span className="heading-font text-xl font-black text-white">{userCoins}</span>
+        {isStoreContext && (
+          <div className="flex items-center gap-2 bg-zinc-900/50 px-4 py-1.5 rounded-xl border border-white/5">
+            <Gem size={14} className="text-violet-500" fill="currentColor" />
+            <span className="heading-font text-xl font-black text-white leading-none">
+              {userGems.toLocaleString()}
+            </span>
           </div>
-        </header>
+        )}
+      </header>
 
-        <div className="flex-1 flex flex-col items-center px-6 overflow-y-auto no-scrollbar gap-6 pb-10">
-          
-          {/* 1. HERO PREVIEW */}
-          <div className="relative py-4 flex flex-col items-center w-full">
-            <div className={`transition-all duration-700 ${animatingUpgrade ? 'scale-110 brightness-150 rotate-y-180' : 'scale-100'}`}>
-              <Card 
-                card={card} 
-                stage={currentStage} 
-                className="w-44 shadow-[0_40px_100px_rgba(0,0,0,0.8)]" 
-              />
-            </div>
-            
-            {/* ABILITY TRIGGER LABEL */}
-            <div className="mt-8 flex flex-col items-center gap-2">
-               <div className="px-4 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full flex items-center gap-2 shadow-lg">
-                  <span className="text-[8px] font-black text-red-600 uppercase tracking-widest bg-red-600/10 px-2 py-0.5 rounded italic">
-                    {card.abilityType || 'PASSIVE'}
-                  </span>
-                  <span className="text-[11px] font-bold text-zinc-300 tracking-tight uppercase">
-                    {card.name.split(' ')[0]}'s Impact
-                  </span>
-               </div>
-               <p className="text-[10px] text-zinc-500 font-medium text-center px-8 leading-tight">
-                 {card.abilityText || "Increases team morale and momentum during critical over phases."}
-               </p>
-            </div>
-
-            {/* SQUAD USAGE */}
-            <div className="mt-6 flex items-center gap-3 bg-zinc-900/40 px-5 py-2.5 rounded-2xl border border-white/5">
-               <Users size={14} className="text-zinc-600" />
-               <div className="flex flex-col">
-                  <p className="text-[7px] font-black text-zinc-600 uppercase tracking-widest">Active Squads</p>
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-tight">
-                    {usedInSquads.length > 0 ? usedInSquads.join(', ') : 'NOT USED IN ANY SQUAD'}
-                  </p>
-               </div>
-            </div>
-          </div>
-
-          {/* 2. PROGRESSION TRACK (HORIZONTAL TABS) */}
-          <div className="w-full space-y-5">
-            <div className="flex items-center justify-between gap-3 bg-zinc-900/50 p-2 rounded-3xl border border-zinc-800">
-               {STAGES.map((stg, idx) => {
-                 const isCompleted = currentStage > idx;
-                 const isCurrent = currentStage === idx;
-                 const isSelected = selectedStageIdx === idx;
-                 const isLocked = currentStage < idx;
-
-                 return (
-                   <button 
-                     key={stg.id}
-                     onClick={() => setSelectedStageIdx(idx)}
-                     className={`flex-1 flex flex-col items-center justify-center py-3 rounded-2xl transition-all relative border ${
-                       isSelected 
-                         ? 'bg-zinc-800 border-red-600 shadow-lg scale-105' 
-                         : 'bg-transparent border-transparent'
-                     }`}
-                   >
-                     <div className={`mb-1 transition-colors ${
-                       isCompleted ? 'text-emerald-500' : isCurrent ? 'text-red-600 animate-pulse' : 'text-zinc-700'
-                     }`}>
-                        {isCompleted ? <CheckCircle2 size={16} /> : isLocked ? <Lock size={16} /> : <div className="w-4 h-4 rounded-full border-2 border-current" />}
-                     </div>
-                     <span className={`heading-font text-sm font-black italic transition-colors ${
-                       isSelected ? 'text-white' : 'text-zinc-600'
-                     }`}>STG {stg.id}</span>
-                   </button>
-                 );
-               })}
-            </div>
-
-            {/* 3. STAGE DETAIL PANEL */}
-            <div className="w-full bg-zinc-900/80 border border-zinc-800 p-6 rounded-[2.5rem] shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
-               <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h4 className="heading-font text-2xl font-black text-white italic leading-none uppercase tracking-tight">
-                      {selectedStage.title}
-                    </h4>
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1.5">
-                      {isSelectedStageCompleted ? 'MILESTONE ACHIEVED' : isSelectedStageLocked ? `REQUIRES PLAYER LVL ${selectedStage.unlockLevel}` : 'ACTIVE EVOLUTION'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                     <p className="text-[9px] font-black text-red-500 uppercase tracking-widest bg-red-500/10 px-2 py-0.5 rounded mb-1.5">PREVIEW</p>
-                     <p className="heading-font text-xl font-black text-white italic">{selectedStage.statPreview}</p>
-                  </div>
-               </div>
-               
-               <p className="text-[11px] text-zinc-400 font-medium leading-relaxed">
-                 {selectedStage.description}
-               </p>
-
-               {isSelectedStageCurrent && (
-                 <div className="mt-6 pt-6 border-t border-zinc-800 flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                       <div className="flex flex-col">
-                          <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest mb-1">Current Potency</span>
-                          <span className="heading-font text-2xl font-black text-zinc-400 italic leading-none">{currentRuns}</span>
-                       </div>
-                       <ChevronRight size={16} className="text-zinc-800 mt-2" />
-                       <div className="flex flex-col">
-                          <span className="text-[7px] font-black text-red-500 uppercase tracking-widest mb-1">Upgraded Potency</span>
-                          <span className="heading-font text-2xl font-black text-red-600 italic leading-none">{nextRuns}</span>
-                       </div>
-                    </div>
-                 </div>
-               )}
-            </div>
-          </div>
-
+      {/* Main Container - Flex-1 with centered items, NO scrolling */}
+      <div className="flex-1 w-full flex flex-col items-center justify-between py-6 px-6 gap-4 overflow-hidden">
+        
+        {/* Top: Minimal Card Art Preview */}
+        <div className="shrink-0 transform scale-90 sm:scale-100">
+          <Card 
+            card={card} 
+            minimal={true}
+            className="w-48 shadow-[0_30px_80px_rgba(0,0,0,0.8)] border-4 border-white/5" 
+          />
         </div>
 
-        {/* 4. PRIMARY CTA FOOTER */}
-        <footer className="p-6 bg-black border-t border-zinc-900 shrink-0 space-y-4">
-           {isSelectedStageCurrent ? (
-             <button 
-               onClick={handleUpgradeClick}
-               disabled={userCoins < selectedStage.gemCost || animatingUpgrade}
-               className={`w-full py-5 rounded-2xl heading-font text-3xl font-black italic uppercase tracking-[0.2em] transition-all relative overflow-hidden ${
-                 userCoins >= selectedStage.gemCost && !animatingUpgrade
-                   ? 'bg-red-600 text-white shadow-[0_15px_40px_rgba(220,38,38,0.4)] border-b-4 border-red-800 active:scale-[0.98]'
-                   : 'bg-zinc-900 text-zinc-700 border border-zinc-800 cursor-not-allowed opacity-50'
-               }`}
-             >
-                {animatingUpgrade ? (
-                   <div className="flex items-center justify-center gap-3">
-                      <Sparkles className="animate-spin" size={24} />
-                      EVOLVING...
-                   </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-3">
-                    <span>UNLOCK UPGRADE</span>
-                    <div className="flex items-center gap-1.5 bg-black/30 px-3 py-1 rounded-xl">
-                       <Gem size={14} className="text-violet-400" />
-                       <span className="text-xl">{selectedStage.gemCost}</span>
+        {/* Mid: Compact Ability Section */}
+        <div className="flex flex-col items-center text-center max-w-sm space-y-2 shrink-0">
+          <div className="bg-zinc-900/50 px-3 py-1 rounded-full border border-white/5">
+            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] leading-none">
+              {getAbilityLabel(card.abilityType)}
+            </span>
+          </div>
+          
+          <p className="text-sm font-medium text-zinc-400 italic leading-relaxed px-4">
+            “{card.abilityText || "Strategic ability details for match impact."}”
+          </p>
+        </div>
+
+        {/* Bottom: 2x2 Upgrade Console (Collection Context) */}
+        {!isStoreContext ? (
+          <div className="w-full max-w-md bg-zinc-950 border border-zinc-900 rounded-[2.5rem] p-5 shrink-0 shadow-2xl">
+            <div className="grid grid-cols-2 gap-3">
+              {UPGRADE_DEFINITIONS.map((upgrade, index) => {
+                const isUnlocked = cardUpgrades > index;
+                const isAvailable = !isUnlocked && userLevel >= upgrade.levelReq;
+                const isLocked = !isUnlocked && !isAvailable;
+                const Icon = upgrade.icon;
+
+                return (
+                  <div 
+                    key={upgrade.id}
+                    className={`flex flex-col p-4 rounded-3xl border transition-all duration-300 ${
+                      isUnlocked 
+                        ? 'bg-emerald-500/5 border-emerald-500/20' 
+                        : isAvailable 
+                          ? 'bg-zinc-900 border-zinc-800' 
+                          : 'bg-zinc-900/20 border-zinc-900 opacity-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className={`p-1.5 rounded-lg ${isUnlocked ? 'text-emerald-500' : isAvailable ? 'text-red-500' : 'text-zinc-700'}`}>
+                        <Icon size={16} />
+                      </div>
+                      <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest truncate">
+                        {upgrade.name}
+                      </span>
+                    </div>
+
+                    <div className="mt-auto">
+                      {isUnlocked ? (
+                        <div className="flex items-center gap-2 text-emerald-500">
+                          <Check size={14} />
+                          <span className="heading-font text-lg font-black uppercase">Unlocked</span>
+                        </div>
+                      ) : isAvailable ? (
+                        <button 
+                          onClick={handleUpgrade}
+                          className="w-full py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl heading-font text-xl font-black italic uppercase tracking-wider transition-all active:scale-95 shadow-lg border-b-2 border-red-800"
+                        >
+                          UNLOCK
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2 text-zinc-700">
+                          <Lock size={12} />
+                          <span className="text-[10px] font-black uppercase tracking-tighter">LV. {upgrade.levelReq} REQ.</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
-             </button>
-           ) : isSelectedStageLocked ? (
-             <div className="w-full py-5 rounded-2xl bg-zinc-950 border border-zinc-900 text-zinc-800 flex items-center justify-center gap-3 heading-font text-2xl font-black italic uppercase">
-                <Lock size={20} />
-                LOCKED UNTIL PREVIOUS COMPLETION
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* Store Footer */
+          <div className="w-full max-w-sm shrink-0">
+             <div className="flex flex-col items-center gap-4 py-8">
+               <div className="flex items-center gap-2">
+                 <span className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Unlock Cost</span>
+                 <Gem size={14} className="text-violet-500" fill="currentColor" />
+                 <span className="heading-font text-3xl font-black text-zinc-100">{gemCost}</span>
+               </div>
+               <button 
+                 className="w-full py-4 bg-red-600 text-white rounded-2xl heading-font text-2xl font-black italic uppercase tracking-widest shadow-xl active:scale-95 transition-all border-b-4 border-red-800"
+               >
+                 UNLOCK PLAYER
+               </button>
              </div>
-           ) : (
-             <div className="w-full py-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center gap-3 heading-font text-2xl font-black italic uppercase">
-                <CheckCircle2 size={20} />
-                UPGRADE ALREADY UNLOCKED
-             </div>
-           )}
+          </div>
+        )}
 
-           {!hideSquadActions && !animatingUpgrade && (
-             <button 
-                onClick={() => { 
-                  onUpdateSquad({ 
-                    ...targetSquad, 
-                    cards: isInTargetSquad ? targetSquad.cards.filter(c => c.id !== card.id) : [...targetSquad.cards, card], 
-                    power: targetSquad.power + (isInTargetSquad ? -50 : 50) 
-                  }); 
-                  onClose(); 
-                }} 
-                disabled={!isInTargetSquad && isFull} 
-                className={`w-full py-3.5 rounded-xl heading-font text-xl font-black italic uppercase tracking-widest transition-all ${
-                  isInTargetSquad 
-                    ? 'bg-zinc-900 text-zinc-600 border border-zinc-800' 
-                    : isFull 
-                      ? 'bg-zinc-900 text-zinc-800 border border-zinc-800 cursor-not-allowed opacity-40' 
-                      : 'bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700'
-                }`}
-             >
-               {isInTargetSquad ? 'REMOVE FROM SQUAD' : isFull ? 'SQUAD FULL' : 'ADD TO SQUAD'}
-             </button>
-           )}
-        </footer>
+        {/* Contextual Action Button (Add to Squad) */}
+        {!isStoreContext && onToggleSquad && (
+           <div className="w-full max-w-sm shrink-0 pb-4">
+              <button 
+                onClick={handleAction}
+                className="w-full py-4 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-2xl heading-font text-xl font-black italic uppercase tracking-widest hover:text-white transition-all active:scale-95"
+              >
+                {activeSquadId && squads.find(s => s.id === activeSquadId)?.cards.some(c => c.id === card.id) 
+                  ? 'REMOVE FROM SQUAD' 
+                  : 'ASSIGN TO SQUAD'
+                }
+              </button>
+           </div>
+        )}
       </div>
+
+      {/* Modal Close Back-layer */}
+      <div className="absolute inset-0 z-0" onClick={onClose} />
     </div>
   );
 };
