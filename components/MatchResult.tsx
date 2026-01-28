@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppView } from '../types';
 
@@ -17,9 +16,9 @@ export const MatchResult: React.FC<MatchResultProps> = ({ outcome, onNavigate })
       setPhase('ready');
     }, 900);
 
-    // Phase 2: Automatic transition back to Gameplay after 2.5 seconds
+    // Phase 2: Automatic transition to REWARDS screen after 2.8 seconds
     const autoNavTimer = setTimeout(() => {
-      onNavigate(AppView.GAMEPLAY);
+      onNavigate(AppView.MATCH_REWARDS);
     }, 2800);
 
     return () => {

@@ -1,6 +1,5 @@
-
 import React, { useState, useMemo } from 'react';
-import { ShieldAlert, Trophy, Zap, AlertTriangle, Coins, FlaskConical, X } from 'lucide-react';
+import { ShieldAlert, Trophy, Zap, AlertTriangle, Coins, FlaskConical, X, BarChart2, LayoutGrid, TrendingUp } from 'lucide-react';
 import { MatchState, PlayerCard, AppView } from '../types';
 import { MOCK_CARDS } from '../constants';
 import { Card } from './Card';
@@ -9,6 +8,7 @@ interface GameplayProps {
   match: MatchState;
   isPostMatch?: boolean;
   onNavigate?: (view: AppView) => void;
+  onDoublePool?: () => void;
   onComplete: (outcome: 'victory' | 'defeat' | 'draw' | 'declared', declaredBalls: number | null) => void;
 }
 
@@ -20,7 +20,7 @@ interface StadiumData {
   playedCards: { card: PlayerCard; side: 'player' | 'opponent' }[];
 }
 
-export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, onNavigate, onComplete }) => {
+export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, onNavigate, onDoublePool, onComplete }) => {
   const [ballsPlayed, setBallsPlayed] = useState(isPostMatch ? 6 : 0);
   const [stadiums, setStadiums] = useState<StadiumData[]>([
     { id: 1, name: 'Stadium A', playerScore: 0, opponentScore: 0, playedCards: [] },
@@ -36,6 +36,10 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
 
   // Interaction constraints
   const isMatchOver = isPostMatch || ballsPlayed >= 6;
+
+  // Economy Logic
+  const initialPool = match.region.entryFee * 2;
+  const playablePool = Math.floor(initialPool * 0.9) * (match.isDoubled ? 2 : 1);
 
   const handleDragStart = (card: PlayerCard) => {
     if (isMatchOver) return;
@@ -108,8 +112,8 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
   }, [ballsPlayed]);
 
   const refundAmount = useMemo(() => {
-    return Math.floor(match.region.entryFee * refundFactor);
-  }, [match.region.entryFee, refundFactor]);
+    return Math.floor(playablePool * refundFactor);
+  }, [playablePool, refundFactor]);
 
   const handleDeclareConfirm = () => {
     setIsDeclareModalOpen(false);
@@ -146,9 +150,24 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
           <p className={`text-[10px] font-black uppercase tracking-widest ${ballsPlayed >= 5 && !isPostMatch ? 'text-red-500 animate-pulse' : 'text-zinc-500'}`}>
             {isPostMatch ? 'MATCH COMPLETED' : `BALL ${Math.min(ballsPlayed + 1, 6)} / 6`}
           </p>
-          <div className="flex items-center gap-2">
-            <Coins size={12} className="text-yellow-500" />
-            <p className="heading-font text-lg font-bold uppercase truncate max-w-[120px] text-zinc-400">POOL: {match.region.entryFee * 2}</p>
+          <div 
+            onClick={() => !isMatchOver && !match.isDoubled && onDoublePool?.()}
+            className={`flex items-center gap-2 px-3 py-1 rounded-xl transition-all duration-300 relative ${
+              !isMatchOver && !match.isDoubled ? 'cursor-pointer hover:bg-yellow-500/10 active:scale-95' : ''
+            }`}
+          >
+            <div className="flex items-center gap-2 relative">
+              <Coins size={14} className={`${match.isDoubled ? 'text-yellow-400 animate-pulse' : 'text-yellow-500'}`} />
+              <p className={`heading-font text-xl font-bold uppercase truncate max-w-[120px] transition-colors ${match.isDoubled ? 'text-white' : 'text-zinc-400'}`}>
+                POOL: {playablePool}
+              </p>
+              {match.isDoubled && (
+                <div className="absolute -right-8 top-1/2 -translate-y-1/2 bg-red-600 text-[8px] font-black px-1 rounded animate-in zoom-in duration-300">2X</div>
+              )}
+            </div>
+            {!isMatchOver && !match.isDoubled && (
+              <div className="absolute inset-0 border border-yellow-500/20 rounded-xl animate-pulse pointer-events-none" />
+            )}
           </div>
         </div>
 
@@ -209,18 +228,28 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
         </section>
       </div>
 
-      {/* FOOTER ACTIONS */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-900 p-4 pb-10 z-[60] shadow-[0_-15px_40px_rgba(0,0,0,0.8)]">
-        <div className="max-w-lg mx-auto w-full flex gap-3">
+      {/* FOOTER ACTIONS - UPDATED FOR POST-MATCH FLOW */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-900 p-4 pb-12 z-[60] shadow-[0_-15px_40px_rgba(0,0,0,0.8)]">
+        <div className="max-w-lg mx-auto w-full flex flex-col gap-3">
           {isPostMatch ? (
-            <button 
-              onClick={() => onNavigate?.(AppView.MATCH_REWARDS)}
-              className="w-full py-5 bg-red-600 hover:bg-red-500 text-white rounded-2xl heading-font text-2xl font-black italic uppercase tracking-wider shadow-[0_10px_30px_rgba(220,38,38,0.4)] transition-all active:scale-95 border-b-4 border-red-800"
-            >
-              SHOW REWARDS
-            </button>
-          ) : (
             <>
+              <button 
+                onClick={() => onNavigate?.(AppView.MATCH_STATS)}
+                className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(220,38,38,0.4)] border-b-4 border-red-800 active:scale-[0.98] transition-all"
+              >
+                <BarChart2 size={20} />
+                <span className="heading-font text-2xl font-black italic uppercase tracking-wider">SHOW STATS</span>
+              </button>
+              <button 
+                onClick={() => onNavigate?.(AppView.HOME)}
+                className="w-full py-3 bg-black border border-zinc-800 rounded-2xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest text-zinc-500 hover:text-white transition-all active:scale-95"
+              >
+                <LayoutGrid size={16} />
+                MAIN MENU
+              </button>
+            </>
+          ) : (
+            <div className="flex gap-3">
               <button 
                 onClick={() => setIsDeclareModalOpen(true)}
                 disabled={isMatchOver}
@@ -243,7 +272,7 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
               >
                 {isMatchOver ? 'Match Ended' : 'End Ball'}
               </button>
-            </>
+            </div>
           )}
         </div>
       </footer>

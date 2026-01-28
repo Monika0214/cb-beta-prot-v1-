@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { LayoutGrid, Users, Trophy, Store as StoreIcon, Coins, Gem, Target, Package, Library, ArrowLeft, Edit2, X, Shield } from 'lucide-react';
 import { AppView, MatchState, Region, Squad, PlayerCard } from '../types';
@@ -13,7 +12,9 @@ import { Store } from './Store';
 import { Modal } from './Modal';
 import { Matchmaking } from './Matchmaking';
 import { Gameplay } from './Gameplay';
+import { MatchResult } from './MatchResult';
 import { MatchStats } from './MatchStats';
+import { ProgressionView } from './ProgressionView';
 import { EditSquad } from './EditSquad';
 import { PlayerProfile } from './PlayerProfile';
 import { FriendSearch as FriendSearchComponent } from './FriendSearch';
@@ -34,7 +35,9 @@ const VIEW_TITLES: Record<string, string> = {
   [AppView.FRIENDS]: 'SOCIAL',
   [AppView.MATCHMAKING]: 'MATCHMAKING',
   [AppView.GAMEPLAY]: 'GAMEPLAY',
+  [AppView.MATCH_RESULT]: 'MATCH RESULT',
   [AppView.MATCH_STATS]: 'MATCH STATS',
+  [AppView.MATCH_REWARDS]: 'REWARDS',
   [AppView.RANK_PROGRESSION]: 'RANK PROGRESSION',
   [AppView.COLLECTION_LEVEL]: 'COLLECTION LEVEL',
   [AppView.EDIT_SQUAD]: 'EDIT SQUAD',
@@ -68,6 +71,8 @@ const App: React.FC = () => {
   const [squads, setSquads] = useState<Squad[]>(MOCK_SQUADS);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [activeMatch, setActiveMatch] = useState<MatchState | null>(null);
+  const [lastOutcome, setLastOutcome] = useState<{ outcome: 'victory' | 'defeat' | 'draw' | 'declared', declaredBalls: number | null } | null>(null);
+  const [isPostMatch, setIsPostMatch] = useState(false);
 
   const handleBack = () => {
     switch (currentView) {
@@ -76,7 +81,10 @@ const App: React.FC = () => {
       case AppView.PLAYER_PROFILE: setCurrentView(AppView.FRIENDS); break;
       case AppView.RANK_PROGRESSION: setCurrentView(AppView.HOME); break;
       case AppView.COLLECTION_LEVEL: setCurrentView(AppView.HOME); break;
-      default: setCurrentView(AppView.HOME);
+      case AppView.MATCH_STATS: setCurrentView(AppView.GAMEPLAY); break;
+      default: 
+        setIsPostMatch(false);
+        setCurrentView(AppView.HOME);
     }
   };
 
@@ -100,6 +108,8 @@ const App: React.FC = () => {
   };
 
   const startBrawl = (region: Region) => {
+    setIsPostMatch(false);
+    setLastOutcome(null);
     setActiveMatch({
       opponent: { name: 'DarkKnight_99', level: 7, avatar: 'https://images.unsplash.com/photo-1624192132371-367288e67f08?auto=format&fit=crop&q=80&w=200&h=200', squadPower: 245 },
       region: region, ballsPlayed: 0, playerWins: 0, opponentWins: 0, currentStadium: 1, isDeclared: false, score: { player: 0, opponent: 0 }, playedCards: []
@@ -120,8 +130,25 @@ const App: React.FC = () => {
       case AppView.COLLECTION_LEVEL: return <LevelProgression onClose={handleBack} level={userProfile.level} xp={userProfile.xp} />;
       case AppView.EDIT_SQUAD: return <EditSquad squadId={editingSquadId} squads={squads} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} onBack={handleBack} userCoins={userProfile.coins} userEnergy={userProfile.energyDrinks} userGems={userProfile.gems} cardUpgrades={cardUpgrades} onUpgrade={handleUpgradeCard} />;
       case AppView.MATCHMAKING: return <Matchmaking opponent={activeMatch?.opponent} region={activeMatch?.region} onDeductFee={(a) => setUserProfile(p => ({ ...p, coins: p.coins - a }))} onStart={() => setCurrentView(AppView.GAMEPLAY)} />;
-      case AppView.GAMEPLAY: return <Gameplay match={activeMatch!} onComplete={() => setCurrentView(AppView.MATCH_STATS)} />;
-      case AppView.MATCH_STATS: return <MatchStats match={activeMatch!} onBrawlAgain={() => startBrawl(activeMatch!.region)} onExit={() => setCurrentView(AppView.HOME)} />;
+      case AppView.GAMEPLAY: return <Gameplay match={activeMatch!} isPostMatch={isPostMatch} onNavigate={setCurrentView} onComplete={(outcome, declaredBalls) => { setLastOutcome({ outcome, declaredBalls }); setIsPostMatch(true); setCurrentView(AppView.MATCH_RESULT); }} />;
+      case AppView.MATCH_RESULT: return <MatchResult outcome={lastOutcome!.outcome} onNavigate={setCurrentView} onBack={handleBack} />;
+      case AppView.MATCH_STATS: return <MatchStats match={activeMatch!} onBrawlAgain={() => startBrawl(activeMatch!.region)} onExit={() => { setIsPostMatch(false); setCurrentView(AppView.HOME); }} onBack={handleBack} />;
+      case AppView.MATCH_REWARDS: 
+        const isVictory = lastOutcome?.outcome === 'victory';
+        const fee = activeMatch?.region.entryFee || 100;
+        return (
+          <ProgressionView 
+            outcome={lastOutcome!.outcome} 
+            oldXp={userProfile.xp} 
+            oldLevel={userProfile.level} 
+            currentXp={userProfile.xp + (isVictory ? 150 : 50)} 
+            currentLevel={userProfile.level} 
+            oldCoins={userProfile.coins} 
+            currentCoins={userProfile.coins + (isVictory ? fee * 2 : -fee)} 
+            onNavigate={setCurrentView}
+            onClose={() => { setIsPostMatch(false); setCurrentView(AppView.HOME); }}
+          />
+        );
       case AppView.SEARCH_FRIENDS: return <FriendSearchComponent onBack={handleBack} onOpenProfile={(u) => { setSelectedProfile(u); setCurrentView(AppView.PLAYER_PROFILE); }} />;
       case AppView.PLAYER_PROFILE: return <PlayerProfile user={selectedProfile} onBack={handleBack} />;
       default: return null;
@@ -142,7 +169,7 @@ const App: React.FC = () => {
   const showGlobalHeader = currentView !== AppView.HOME;
   const isRootTab = ROOT_TABS.includes(currentView);
   
-  const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_STATS].includes(currentView);
+  const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_RESULT, AppView.MATCH_STATS, AppView.MATCH_REWARDS].includes(currentView);
   const showBottomNav = !isImmersiveFlow;
 
   return (
@@ -150,30 +177,39 @@ const App: React.FC = () => {
       
       {currentView === AppView.HOME && (
         <header className="sticky top-0 z-[60] bg-black/95 backdrop-blur-2xl border-b border-zinc-900/50 animate-header-entry px-4 py-3 flex items-center justify-between gap-2">
+          {/* Identity Section */}
           <div className="flex items-center gap-2 shrink-0">
-            <div onClick={() => setIsProfileModalOpen(true)} className="flex items-center gap-2 bg-[#1c1c1e] rounded-full pr-3 py-0.5 pl-0.5 cursor-pointer hover:bg-zinc-800 transition-all active:scale-95 shadow-lg border border-white/5">
+            {/* Unified Identity Block (Avatar + Name Only) */}
+            <div 
+              onClick={() => setIsProfileModalOpen(true)} 
+              className="flex items-center gap-2 bg-[#1c1c1e] rounded-full pr-3 py-0.5 pl-0.5 cursor-pointer hover:bg-zinc-800 transition-all active:scale-95 shadow-lg border border-white/5 shrink-0"
+            >
               <div className="w-7 h-7 rounded-full border border-teal-500/30 overflow-hidden bg-black shrink-0">
                 <img src={userProfile.avatar} className="w-full h-full rounded-full object-cover" alt="User" />
               </div>
               <span className="text-[10px] font-bold text-zinc-100 uppercase tracking-tight leading-none whitespace-nowrap">{userProfile.name}</span>
             </div>
-            
+
+            {/* Separated Level UI (Yellow Glowing Badge) */}
             <RankPill 
-              rank={userProfile.rank} 
-              onClick={() => setCurrentView(AppView.RANK_PROGRESSION)} 
+              rank={userProfile.level} 
+              onClick={(e) => { e.stopPropagation(); setCurrentView(AppView.COLLECTION_LEVEL); }} 
             />
           </div>
 
+          {/* Compact Currency Section */}
           <div className="flex items-center gap-2 shrink-0">
-            <div onClick={() => setCurrentView(AppView.STORE)} className="flex items-center bg-[#1c1c1e] rounded-full px-2.5 py-1 gap-2.5 cursor-pointer hover:bg-zinc-800 shadow-inner border border-white/5">
+            <div 
+              onClick={() => setCurrentView(AppView.STORE)} 
+              className="flex items-center bg-[#1c1c1e] rounded-full px-2 py-1 gap-2 cursor-pointer hover:bg-zinc-800 shadow-inner border border-white/5"
+            >
               <div className="flex items-center gap-1">
                 <Coins size={10} className="text-amber-500/80" />
-                <span className="heading-font text-[12px] font-black tracking-tight text-zinc-300">{userProfile.coins.toLocaleString()}</span>
+                <span className="heading-font text-[11px] font-black tracking-tight text-zinc-300">{userProfile.coins.toLocaleString()}</span>
               </div>
-              <div className="w-[1px] h-3 bg-zinc-800" />
               <div className="flex items-center gap-1">
                 <Gem size={10} className="text-violet-500/80" />
-                <span className="heading-font text-[12px] font-black tracking-tight text-zinc-300">{userProfile.gems.toLocaleString()}</span>
+                <span className="heading-font text-[11px] font-black tracking-tight text-zinc-300">{userProfile.gems.toLocaleString()}</span>
               </div>
             </div>
             <button onClick={() => setIsMissionsModalOpen(true)} className="p-1.5 text-zinc-600 hover:text-red-500 transition-colors active:scale-90">

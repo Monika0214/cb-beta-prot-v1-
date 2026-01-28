@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Coins, ChevronUp, ChevronDown, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Coins, ChevronUp, ChevronDown, ArrowRight } from 'lucide-react';
 import { AppView } from '../types';
 
 interface ProgressionViewProps {
@@ -9,9 +8,8 @@ interface ProgressionViewProps {
   oldLevel: number;
   currentXp: number;
   currentLevel: number;
-  oldCoins: number;
-  currentCoins: number;
-  onNavigate?: (view: AppView) => void;
+  payout: number;
+  onNavigate: (view: AppView) => void;
   onClose: () => void;
 }
 
@@ -21,24 +19,22 @@ export const ProgressionView: React.FC<ProgressionViewProps> = ({
   oldLevel,
   currentXp,
   currentLevel,
-  oldCoins,
-  currentCoins,
+  payout,
   onNavigate,
 }) => {
   const [animatedXp, setAnimatedXp] = useState(oldXp);
-  const [animatedCoins, setAnimatedCoins] = useState(oldCoins);
+  const [animatedCoins, setAnimatedCoins] = useState(0);
   
   const xpDiff = currentXp - oldXp;
-  const coinDiff = currentCoins - oldCoins;
   const isXpLoss = xpDiff < 0;
-  const isCoinLoss = coinDiff < 0;
   const levelUp = currentLevel > oldLevel;
 
   const isVictory = outcome === 'victory';
   const isDeclared = outcome === 'declared';
+  const showPayout = payout > 0;
 
   useEffect(() => {
-    const duration = 1500;
+    const duration = 1200;
     const start = Date.now();
     
     const animate = () => {
@@ -47,24 +43,24 @@ export const ProgressionView: React.FC<ProgressionViewProps> = ({
       const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       
       setAnimatedXp(Math.round(oldXp + (currentXp - oldXp) * eased));
-      setAnimatedCoins(Math.round(oldCoins + (currentCoins - oldCoins) * eased));
+      setAnimatedCoins(Math.round(payout * eased));
       
       if (progress < 1) requestAnimationFrame(animate);
     };
     requestAnimationFrame(animate);
-  }, [oldXp, currentXp, oldCoins, currentCoins]);
+  }, [oldXp, currentXp, payout]);
 
   const progressPercent = (animatedXp % 2000) / 20;
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col bg-zinc-950 animate-in fade-in duration-300">
+    <div className="h-full flex flex-col bg-zinc-950 animate-in fade-in duration-300">
       
-      <header className="p-6 bg-zinc-900/50 border-b border-zinc-800 text-center">
-        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em] mb-1">Victory Path</p>
+      <header className="p-6 bg-zinc-900/50 border-b border-zinc-800 text-center shrink-0">
+        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em] mb-1">Career Log</p>
         <h1 className="heading-font text-4xl font-black italic tracking-tighter text-white">REWARDS SUMMARY</h1>
       </header>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-6 pb-32">
         {/* Outcome Title Overlay */}
         <div className="text-center py-4">
           <h2 className={`heading-font text-7xl font-black italic tracking-tighter leading-none ${
@@ -104,37 +100,33 @@ export const ProgressionView: React.FC<ProgressionViewProps> = ({
            </div>
         </div>
 
-        {/* CURRENCY UPDATE */}
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl">
-           <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-yellow-600/10 rounded-2xl flex items-center justify-center border border-yellow-600/20">
-                 <Coins className="text-yellow-500" size={24} />
-              </div>
-              <div>
-                 <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Banked Coins</p>
-                 <h4 className="heading-font text-3xl font-black text-white leading-none mt-1">{animatedCoins.toLocaleString()}</h4>
-              </div>
-           </div>
-           <div className={`flex items-center gap-1 heading-font text-3xl font-black italic ${isCoinLoss ? 'text-red-500' : 'text-emerald-500'}`}>
-              {isCoinLoss ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-              {Math.abs(coinDiff)}
-           </div>
-        </div>
+        {/* MATCH EARNINGS - Only visible if > 0 */}
+        {showPayout && (
+          <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl animate-in zoom-in-95 duration-300">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-yellow-600/10 rounded-2xl flex items-center justify-center border border-yellow-600/20">
+                   <Coins className="text-yellow-500" size={24} />
+                </div>
+                <div>
+                   <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Match Earnings</p>
+                   <h4 className="heading-font text-3xl font-black text-white leading-none mt-1">
+                    {animatedCoins.toLocaleString()}
+                   </h4>
+                </div>
+             </div>
+             <div className="text-emerald-500 heading-font text-3xl font-black italic">
+               +{payout}
+             </div>
+          </div>
+        )}
       </div>
 
-      {/* FOOTER ACTIONS */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-900 p-6 pb-12 z-50">
-        <div className="max-w-lg mx-auto w-full flex gap-4">
+      {/* FOOTER ACTIONS - CONSTRAINED WITHIN VIEW */}
+      <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-zinc-950 border-t border-zinc-900 p-6 pb-12 z-50">
+        <div className="w-full">
           <button 
-            onClick={() => onNavigate?.(AppView.GAMEPLAY)}
-            className="flex-1 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl font-black uppercase text-[10px] tracking-widest text-zinc-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2"
-          >
-            <ArrowLeft size={16} />
-            BACK
-          </button>
-          <button 
-            onClick={() => onNavigate?.(AppView.MATCH_STATS)}
-            className="flex-[2] py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(220,38,38,0.4)] border-b-4 border-red-800 active:scale-[0.98] active:border-b-0 transition-all"
+            onClick={() => onNavigate(AppView.MATCH_STATS)}
+            className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(220,38,38,0.4)] border-b-4 border-red-800 active:scale-[0.98] transition-all"
           >
             <span className="heading-font text-2xl font-black italic uppercase tracking-widest">NEXT</span>
             <ArrowRight size={20} />

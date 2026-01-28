@@ -16,7 +16,8 @@ export enum AppView {
   RANK_PROGRESSION = 'RANK_PROGRESSION',
   SEARCH_FRIENDS = 'SEARCH_FRIENDS',
   PLAYER_PROFILE = 'PLAYER_PROFILE',
-  EDIT_PROFILE = 'EDIT_PROFILE'
+  EDIT_PROFILE = 'EDIT_PROFILE',
+  ARENA_SELECTOR = 'ARENA_SELECTOR'
 }
 
 /* Added missing AppTool enum for Sidebar component */
@@ -96,6 +97,7 @@ export interface MatchState {
   opponentWins: number;
   currentStadium: number;
   isDeclared: boolean;
+  isDoubled?: boolean;
   score: {
     player: number;
     opponent: number;

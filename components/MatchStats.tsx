@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Swords, Star, Zap, Shield, Activity, Target, LayoutGrid } from 'lucide-react';
+import { Swords, Star, Zap, Shield, Activity, Target, LayoutGrid, ArrowLeft, Share2 } from 'lucide-react';
 import { MatchState } from '../types';
 import { MOCK_CARDS } from '../constants';
 import { Card } from './Card';
@@ -9,12 +8,13 @@ interface MatchStatsProps {
   match: MatchState;
   onBrawlAgain: () => void;
   onExit: () => void;
+  onBack: () => void;
 }
 
 const PLAYER_AVATAR = 'https://images.unsplash.com/photo-1629285401299-497b4b10492c?auto=format&fit=crop&q=80&w=100&h=100';
 
-export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onExit }) => {
-  // Enhanced Comparison Stats
+export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onExit, onBack }) => {
+  // Stats required by prompt
   const stats = [
     { label: 'Cards Played', player: '6', opponent: '5', icon: Activity },
     { label: 'Outs', player: '2', opponent: '1', icon: Target },
@@ -28,14 +28,22 @@ export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onE
   return (
     <div className="h-full flex flex-col bg-zinc-950 text-white animate-in fade-in duration-500 overflow-hidden relative">
       
-      <header className="p-6 bg-zinc-900/50 border-b border-zinc-800 text-center z-10">
-        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em] mb-1">Arena Comparison</p>
-        <h1 className="heading-font text-4xl font-black italic tracking-tighter text-white">MATCH STATISTICS</h1>
-      </header>
+      {/* Top Header Navigation */}
+      <div className="fixed top-0 left-0 right-0 h-[52px] bg-black border-b border-zinc-800/50 flex items-center justify-between px-4 z-[70]">
+        <button onClick={onBack} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-all active:scale-90">
+          <ArrowLeft size={20} />
+        </button>
+        <h1 className="heading-font text-2xl font-bold text-zinc-100 uppercase tracking-wider">
+          MATCH STATS
+        </h1>
+        <button className="p-2 -mr-2 text-zinc-400 hover:text-white transition-all active:scale-90">
+          <Share2 size={20} />
+        </button>
+      </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8 pb-[140px]">
+      <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8 pb-[180px] pt-20">
         
-        {/* Identifiers */}
+        {/* Player Headers */}
         <div className="flex items-center justify-between px-2">
            <div className="flex flex-col items-center gap-2">
               <div className="w-16 h-16 rounded-full border-2 border-white overflow-hidden bg-zinc-800 p-0.5">
@@ -54,7 +62,7 @@ export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onE
            </div>
         </div>
 
-        {/* HIGHLIGHTS */}
+        {/* High Impact Cards (MVP / High Scorer) */}
         <div className="grid grid-cols-2 gap-4">
            <div className="flex flex-col items-center text-center">
               <div className="relative w-full mb-3">
@@ -76,7 +84,7 @@ export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onE
            </div>
         </div>
 
-        {/* COMPARISON TABLE */}
+        {/* COMPARISON TABLE: [ Player A ] STAT NAME [ Player B ] */}
         <div className="space-y-4">
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-[2.5rem] overflow-hidden divide-y divide-zinc-800/50 shadow-2xl">
             {stats.map((stat, i) => (
@@ -86,7 +94,6 @@ export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onE
                 </div>
                 
                 <div className="flex-1 flex flex-col items-center gap-1">
-                   <stat.icon size={14} className="text-zinc-600" />
                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">{stat.label}</span>
                 </div>
 
@@ -99,24 +106,21 @@ export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onE
         </div>
       </div>
 
-      {/* FOOTER ACTIONS */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-900 p-6 pb-12 z-50">
-        <div className="max-w-lg mx-auto w-full flex gap-4">
-          <button 
-            onClick={onExit}
-            className="flex-1 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl font-black uppercase text-[10px] tracking-widest text-zinc-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2"
-          >
-            <LayoutGrid size={16} />
-            MAIN MENU
-          </button>
-          <button 
-            onClick={onBrawlAgain}
-            className="flex-[2] py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(220,38,38,0.4)] border-b-4 border-red-800 active:scale-[0.98] transition-all"
-          >
-            <Swords size={20} />
-            <span className="heading-font text-2xl font-black italic uppercase tracking-wider">BRAWL AGAIN</span>
-          </button>
-        </div>
+      {/* FOOTER ACTIONS - NEW LAYOUT */}
+      <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-zinc-950 border-t border-zinc-900 p-6 pb-12 z-50 flex flex-col gap-3">
+        <button 
+          onClick={onExit}
+          className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(220,38,38,0.4)] border-b-4 border-red-800 active:scale-[0.98] transition-all"
+        >
+          <span className="heading-font text-2xl font-black italic uppercase tracking-wider">MAIN MENU</span>
+        </button>
+        <button 
+          onClick={onBrawlAgain}
+          className="w-full py-4 bg-black border border-zinc-800 rounded-2xl font-black uppercase text-[12px] tracking-widest text-zinc-400 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2"
+        >
+          <Swords size={18} />
+          BRAWL AGAIN
+        </button>
       </footer>
     </div>
   );
