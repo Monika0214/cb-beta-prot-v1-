@@ -85,7 +85,8 @@ export const Home: React.FC<HomeProps> = ({ setView, startBrawl, squads, activeS
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/50 to-transparent" />
               </div>
 
-              <div className={`absolute inset-x-0 bottom-44 p-10 z-10 transition-opacity duration-300 ${activeIndex === i ? 'opacity-100 animate-hero-entry' : 'opacity-0'}`}>
+              {/* CRITICAL POSITION NUDGE: bottom-44 increased to bottom-52 */}
+              <div className={`absolute inset-x-0 bottom-52 p-10 z-10 transition-opacity duration-300 ${activeIndex === i ? 'opacity-100 animate-hero-entry' : 'opacity-0'}`}>
                 <h3 className="heading-font text-[36px] font-black text-white italic tracking-tight uppercase leading-[1.1] drop-shadow-[0_10px_10px_rgba(0,0,0,0.9)] max-w-[85%]">
                   {item.title}
                 </h3>
@@ -103,7 +104,8 @@ export const Home: React.FC<HomeProps> = ({ setView, startBrawl, squads, activeS
           ))}
         </div>
 
-        <div className="absolute bottom-44 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+        {/* CRITICAL POSITION NUDGE: bottom-44 increased to bottom-52 to stay aligned with content */}
+        <div className="absolute bottom-52 left-1/2 -translate-x-1/2 flex gap-3 z-20">
           {CAROUSEL_ITEMS.map((_, i) => (
             <div 
               key={i} 
