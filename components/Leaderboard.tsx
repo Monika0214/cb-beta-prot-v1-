@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Trophy, Medal, Zap } from 'lucide-react';
 
@@ -106,16 +105,11 @@ export const Leaderboard: React.FC = () => {
 
       {/* 3. STICKY LOCAL PLAYER TILE (FIXED ABOVE NAV) */}
       {/* 
-        The pb-[92px] ensures this section is visible above the bottom navigation bar 
-        which is fixed at the bottom of the screen in App.tsx.
+        POSITION ADJUSTMENT: 
+        1. Increased pb from 104px to 118px to move the tile slightly upward.
+        2. Removed the "Your Position" label group.
       */}
-      <div className="shrink-0 bg-gradient-to-t from-black via-black/95 to-transparent px-4 pb-[104px] pt-6 border-t border-zinc-900/50">
-        <div className="mb-3 flex items-center justify-center">
-           <div className="h-[1px] w-8 bg-zinc-800 rounded-full" />
-           <span className="text-[8px] font-black text-zinc-600 uppercase tracking-[0.5em] mx-3">Your Position</span>
-           <div className="h-[1px] w-8 bg-zinc-800 rounded-full" />
-        </div>
-
+      <div className="shrink-0 bg-gradient-to-t from-black via-black/95 to-transparent px-4 pb-[118px] pt-6 border-t border-zinc-900/50">
         <div className="p-4 rounded-[1.5rem] border-2 border-red-600 bg-red-600/10 backdrop-blur-md flex items-center justify-between shadow-[0_-10px_30px_rgba(220,38,38,0.15)] relative overflow-hidden group">
           <div className="absolute inset-0 bg-red-600/5 animate-pulse pointer-events-none" />
           <div className="flex items-center gap-4 relative z-10">

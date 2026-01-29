@@ -283,6 +283,35 @@
           animation: level-rank-glow 3s infinite ease-in-out;
         }
 
+        /* --- PREMIUM SHIMMER EFFECT --- */
+        @keyframes premium-shimmer-sweep {
+          0% { transform: translateX(-150%) skewX(-25deg); }
+          25% { transform: translateX(150%) skewX(-25deg); }
+          100% { transform: translateX(150%) skewX(-25deg); }
+        }
+        .shimmer-btn {
+          position: relative;
+          overflow: hidden;
+        }
+        .shimmer-btn::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 80px;
+          height: 100%;
+          background: linear-gradient(
+            to right,
+            transparent,
+            rgba(255, 255, 255, 0.08),
+            rgba(255, 255, 255, 0.22),
+            rgba(255, 255, 255, 0.08),
+            transparent
+          );
+          animation: premium-shimmer-sweep 4s infinite linear;
+          pointer-events: none;
+        }
+
         .btn-press:active {
           transform: scale(0.96) !important;
           transition: transform 0.1s ease-out;

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { ChevronRight, Users, MapPin, Swords, Package, Target, Edit2, TrendingUp, ShieldAlert } from 'lucide-react';
-import { MOCK_REGIONS, MOCK_SQUADS, MOCK_CARDS } from '../constants';
+import { ChevronRight, Users, MapPin, Swords, Package, Target, Edit2, TrendingUp, ShieldAlert, CheckCircle2, Lock, Coins, Zap } from 'lucide-react';
+import { MOCK_REGIONS, MOCK_SQUADS, MOCK_CARDS, ExtendedRegion } from '../constants';
 import { Modal } from './Modal';
 import { Region, Squad, AppView } from '../types';
 import { Card } from './Card';
@@ -27,7 +27,7 @@ export const Lobby: React.FC<LobbyProps> = ({ setView, startBrawl }) => {
             { title: 'UNLOCK MUMBAI ARENA', desc: 'New High Stakes Turf', cta: 'Unlock Stadium', img: MOCK_CARDS[2].image },
             { title: 'FLASH EVENT: WORLD CUP', desc: 'Exclusive Rewards Live', cta: 'View Event', img: MOCK_CARDS[1].image }
           ].map((launch, i) => (
-            <div key={i} className="min-w-full snap-center relative aspect-[16/10] overflow-hidden group">
+            <div key={`launch-${i}`} className="min-w-full snap-center relative aspect-[16/10] overflow-hidden group">
               <img 
                 src={launch.img} 
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
@@ -97,7 +97,7 @@ export const Lobby: React.FC<LobbyProps> = ({ setView, startBrawl }) => {
             </div>
             <div className="flex -space-x-3">
               {selectedSquad.cards.map((c, i) => (
-                <div key={i} className="w-10 h-14 rounded-lg overflow-hidden border-2 border-zinc-900 shadow-xl">
+                <div key={`squad-card-${i}`} className="w-10 h-14 rounded-lg overflow-hidden border-2 border-zinc-900 shadow-xl">
                    <img src={c.image} className="w-full h-full object-cover" alt="" />
                 </div>
               ))}
@@ -125,7 +125,7 @@ export const Lobby: React.FC<LobbyProps> = ({ setView, startBrawl }) => {
       <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-lg px-8 z-50">
         <button 
           onClick={() => startBrawl(selectedRegion)}
-          className="w-full h-20 bg-red-600 hover:bg-red-500 text-white rounded-[2rem] shadow-[0_15px_50px_rgba(220,38,38,0.5)] flex items-center justify-center gap-4 active:scale-95 transition-all group border-b-4 border-red-800 relative overflow-hidden"
+          className="w-full h-20 bg-red-600 hover:bg-red-500 text-white rounded-[2rem] shadow-[0_15px_50px_rgba(220,38,38,0.5)] flex items-center justify-center gap-4 active:scale-95 transition-all group border-b-4 border-red-800 relative overflow-hidden shimmer-btn"
         >
           <div className="absolute inset-0 bg-white/10 opacity-0 group-active:opacity-100 transition-opacity" />
           <Swords size={32} className="group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300" />
@@ -138,6 +138,7 @@ export const Lobby: React.FC<LobbyProps> = ({ setView, startBrawl }) => {
       <Modal isOpen={isRegionModalOpen} onClose={() => setIsRegionModalOpen(false)} title="Select Region">
         <div className="grid gap-3 py-2">
           {MOCK_REGIONS.map((region) => (
+            /* Fixed: key must be string, region.id is used. className uses template literal string for boolean condition */
             <div 
               key={region.id}
               onClick={() => { setSelectedRegion(region); setIsRegionModalOpen(false); }}
@@ -147,23 +148,34 @@ export const Lobby: React.FC<LobbyProps> = ({ setView, startBrawl }) => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-zinc-900 overflow-hidden border border-zinc-700">
-                    <img src={region.image} className="w-full h-full object-cover" alt="" />
+                  <div className="w-12 h-12 bg-zinc-800 rounded-xl overflow-hidden border border-zinc-700">
+                    <img src={region.flag} className="w-full h-full object-cover" alt="" />
                   </div>
                   <div>
-                    <h5 className="heading-font text-2xl font-black text-white uppercase italic tracking-tight">{region.name}</h5>
-                    <div className="flex gap-2 mt-1">
-                       <span className="text-[8px] font-black text-yellow-500 uppercase tracking-widest">{region.entryFee} Coins</span>
-                       <span className={`text-[8px] font-black uppercase tracking-widest ${
-                         region.risk === 'Low' ? 'text-blue-500' : region.risk === 'Medium' ? 'text-orange-500' : 'text-red-600'
-                       }`}>• {region.risk} Risk</span>
-                    </div>
+                    <h5 className="heading-font text-xl font-black text-white uppercase">{region.name}</h5>
+                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{region.country}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                   <p className="text-[14px] font-black text-white heading-font">{region.playersCount}</p>
-                   <p className="text-[8px] font-black text-zinc-500 uppercase">Players</p>
-                </div>
+                {selectedRegion.id === region.id && <CheckCircle2 size={20} className="text-red-600" />}
+              </div>
+              
+              <div className="flex items-center gap-6 border-t border-zinc-800/50 pt-3">
+                 <div className="flex items-center gap-1.5">
+                    <Coins size={12} className="text-amber-500" />
+                    <span className="text-xs font-bold text-white uppercase">{region.entryFee}</span>
+                 </div>
+                 <div className="flex items-center gap-1.5">
+                    <Zap size={12} className="text-blue-500" />
+                    <span className="text-xs font-bold text-white uppercase">+{region.energyReward} NRG</span>
+                 </div>
+                 <div className="flex items-center gap-1.5 ml-auto">
+                    <span className={`text-[9px] font-black px-2 py-0.5 rounded border ${
+                      region.risk === 'Low' ? 'bg-blue-600/10 text-blue-500 border-blue-500/20' : 
+                      region.risk === 'Medium' ? 'bg-orange-600/10 text-orange-500 border-orange-500/20' : 'bg-red-600/10 text-red-600 border-red-600/20'
+                    }`}>
+                      {region.risk} RISK
+                    </span>
+                 </div>
               </div>
             </div>
           ))}
@@ -176,23 +188,20 @@ export const Lobby: React.FC<LobbyProps> = ({ setView, startBrawl }) => {
             <div 
               key={squad.id}
               onClick={() => { setSelectedSquad(squad); setIsSquadModalOpen(false); }}
-              className={`p-5 rounded-3xl border-2 transition-all cursor-pointer flex flex-col gap-4 ${
+              className={`p-5 rounded-3xl border-2 transition-all cursor-pointer flex items-center justify-between ${
                 selectedSquad.id === squad.id ? 'bg-red-600/10 border-red-600 shadow-xl' : 'bg-zinc-800/40 border-zinc-800 hover:border-zinc-700'
               }`}
             >
-              <div className="flex justify-between items-center w-full">
-                <div>
-                   <h5 className="heading-font text-3xl font-black text-white uppercase italic leading-none">{squad.name}</h5>
-                   <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-1">POWER: {squad.power}</p>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-zinc-900 rounded-xl flex items-center justify-center text-red-600 border border-zinc-800">
+                  <Users size={24} />
                 </div>
-                <div className="flex -space-x-4">
-                  {squad.cards.map((c, i) => (
-                    <div key={i} className="w-10 h-14 rounded-lg overflow-hidden border-2 border-zinc-900 shadow-2xl">
-                       <img src={c.image} className="w-full h-full object-cover" alt="" />
-                    </div>
-                  ))}
+                <div>
+                  <h5 className="heading-font text-xl font-black text-white uppercase italic">{squad.name}</h5>
+                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">POWER: {squad.power}</p>
                 </div>
               </div>
+              {selectedSquad.id === squad.id && <CheckCircle2 size={20} className="text-red-600" />}
             </div>
           ))}
         </div>

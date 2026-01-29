@@ -138,7 +138,7 @@ export const Home: React.FC<HomeProps> = ({ setView, startBrawl, squads, activeS
 
           <button 
             onClick={() => startBrawl(selectedRegion)}
-            className="w-[130px] h-[68px] bg-red-600 border-b-4 border-red-800 rounded-2xl flex items-center justify-center gap-2 transition-all btn-press animate-brawl-pulse shadow-[0_8px_20px_rgba(220,38,38,0.3)] shrink-0"
+            className="w-[130px] h-[68px] bg-red-600 border-b-4 border-red-800 rounded-2xl flex items-center justify-center gap-2 transition-all btn-press animate-brawl-pulse shadow-[0_8px_20px_rgba(220,38,38,0.3)] shrink-0 shimmer-btn"
           >
             <Swords size={24} className="text-white drop-shadow-sm shrink-0" />
             <span className="heading-font text-[24px] font-black italic tracking-tighter text-white leading-none">BRAWL</span>
