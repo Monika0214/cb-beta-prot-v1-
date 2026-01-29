@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { ArrowRight, Coins, FlaskConical, Gem, Activity } from 'lucide-react';
 import { AppView } from '../types';
@@ -152,7 +151,7 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
   const isMatch = currentStep?.type === 'MATCH';
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-end justify-center select-none overflow-hidden">
+    <div className="fixed inset-0 z-[1000] flex items-end justify-center select-none overflow-hidden h-[100dvh]">
       
       {/* Backdrop Dim Layer */}
       <div 
@@ -162,11 +161,11 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
 
       {/* Reward Sheet (Modal Popup) - Slides up from bottom edge */}
       <div 
-        className="relative w-full max-w-lg bg-zinc-950 rounded-t-[2.5rem] h-[82vh] border-t border-zinc-900 shadow-[0_-20px_60px_rgba(0,0,0,0.9)] animate-in slide-in-from-bottom-full duration-[600ms] ease-out flex flex-col overflow-hidden"
+        className="relative w-full max-w-lg bg-zinc-950 rounded-t-[2.5rem] h-[82dvh] border-t border-zinc-900 shadow-[0_-20px_60px_rgba(0,0,0,0.9)] animate-in slide-in-from-bottom-full duration-[600ms] ease-out flex flex-col overflow-hidden"
       >
         
         {/* MANDATORY PERSISTENT HEADER (User Details & Instant Balances) */}
-        <div className="shrink-0 flex items-center justify-between px-8 py-6 border-b border-zinc-900/50 bg-black/20">
+        <div className="shrink-0 flex items-center justify-between px-8 py-6 border-b border-zinc-900/50 bg-black/20 pt-[calc(1.5rem+env(safe-area-inset-top)/2)]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full border border-zinc-700 overflow-hidden bg-zinc-900 shadow-lg">
               <img src={userProfile.avatar} className="w-full h-full object-cover" alt="" />
@@ -291,7 +290,7 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
         </div>
 
         {/* Footer CTA: Appears ONLY after 3-second anticipation delay */}
-        <div className="shrink-0 pb-16 pt-4 flex justify-center z-10 h-32 items-center">
+        <div className="shrink-0 pb-[calc(3rem+env(safe-area-inset-bottom))] pt-4 flex justify-center z-10 h-32 items-center">
           <button 
             onClick={handleNextStep}
             disabled={!ctaVisible}

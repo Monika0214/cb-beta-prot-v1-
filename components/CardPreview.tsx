@@ -137,10 +137,10 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
   const shouldHideUpgradeStacks = hideUpgrades || activeInternalTab === 'TACTICAL' || activeInternalTab === 'PREVIEW';
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center animate-in fade-in duration-300 overflow-hidden h-screen max-h-screen select-none">
+    <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center animate-in fade-in duration-300 overflow-hidden h-[100dvh] max-h-[100dvh] select-none">
       
       {/* Compact Header */}
-      <header className="w-full px-6 h-12 flex items-center justify-between shrink-0 relative z-10">
+      <header className="w-full px-6 h-12 flex items-center justify-between shrink-0 relative z-10 pt-[env(safe-area-inset-top)]">
         <button onClick={onClose} className="p-2 -ml-2 text-zinc-600 hover:text-white transition-colors">
           <ArrowLeft size={20} />
         </button>
@@ -384,7 +384,7 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
       </div>
 
       {/* Streamlined Footer Actions - Primary CTAs Anchored to Bottom */}
-      <footer className="w-full max-w-xs px-6 pb-12 flex flex-col gap-4 shrink-0 mt-auto">
+      <footer className="w-full max-w-xs px-6 pb-[calc(3rem+env(safe-area-inset-bottom))] flex flex-col gap-4 shrink-0 mt-auto">
         
         {/* UNIFIED CTA BLOCK FOR ALL PREVIEW STATES (FIXED POSITION) */}
         {!isStoreContext && activeInternalTab === 'PREVIEW' && (

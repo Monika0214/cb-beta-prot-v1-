@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { LayoutGrid, Users, Trophy, Store as StoreIcon, Coins, Gem, Target, Package, Library, ArrowLeft, Edit2, X, Shield } from 'lucide-react';
 import { AppView, MatchState, Region, Squad, PlayerCard } from './types';
@@ -223,7 +222,6 @@ const App: React.FC = () => {
               payout={lastOutcome?.payout || 0}
               energyEarned={lastOutcome?.energyReward || 0}
               gemsEarned={lastOutcome?.gemReward || 0}
-              // Added userProfile for PostMatchRewards (Fix Error in line 218)
               userProfile={userProfile}
               onNavigate={setCurrentView}
             />
@@ -261,10 +259,10 @@ const App: React.FC = () => {
   const showBottomNav = !isImmersiveFlow;
 
   return (
-    <div className="relative h-screen w-full bg-black text-white overflow-hidden flex flex-col max-w-lg mx-auto border-x border-zinc-900 shadow-2xl">
+    <div className="relative h-[100dvh] w-full bg-black text-white overflow-hidden flex flex-col max-w-lg mx-auto border-x border-zinc-900 shadow-2xl">
       
       {currentView === AppView.HOME && (
-        <header className="sticky top-0 z-[60] bg-black/95 backdrop-blur-2xl border-b border-zinc-900/50 animate-header-entry px-4 py-3 flex items-center justify-between gap-2">
+        <header className="sticky top-0 z-[60] bg-black/95 backdrop-blur-2xl border-b border-zinc-900/50 animate-header-entry px-4 py-3 flex items-center justify-between gap-2 pt-[calc(0.75rem+env(safe-area-inset-top))]">
           <div className="flex items-center gap-2 shrink-0">
             <div 
               onClick={() => setIsProfileModalOpen(true)} 
@@ -304,7 +302,7 @@ const App: React.FC = () => {
       )}
 
       {showGlobalHeader && (
-        <header className="fixed top-0 left-0 right-0 h-[52px] bg-black border-b border-zinc-800/50 flex items-center px-4 z-[70] shadow-sm">
+        <header className="fixed top-0 left-0 right-0 h-[calc(52px+env(safe-area-inset-top))] bg-black border-b border-zinc-800/50 flex items-center px-4 z-[70] shadow-sm pt-[env(safe-area-inset-top)]">
           {!isRootTab && (
             <button onClick={handleBack} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-all active:scale-90 mr-2">
               <ArrowLeft size={20} />
@@ -316,12 +314,12 @@ const App: React.FC = () => {
         </header>
       )}
 
-      <main className={`flex-1 overflow-y-auto no-scrollbar ${showGlobalHeader ? 'pt-[52px]' : ''}`}>
+      <main className={`flex-1 overflow-y-auto no-scrollbar ${showGlobalHeader ? 'pt-[calc(52px+env(safe-area-inset-top))]' : ''}`}>
         {renderView()}
       </main>
 
       {showBottomNav && (
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-black border-t border-zinc-800/50 flex items-center justify-between px-2 pt-3 pb-8 z-[60] shadow-[0_-10px_40_rgba(0,0,0,0.8)]">
+        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-black border-t border-zinc-800/50 flex items-center justify-between px-2 pt-3 pb-[calc(2rem+env(safe-area-inset-bottom))] z-[60] shadow-[0_-10px_40_rgba(0,0,0,0.8)]">
           {[
             { view: AppView.STORE, icon: StoreIcon, label: 'STORE' },
             { view: AppView.COLLECTIONS, icon: Library, label: 'COLLECTIONS' },
