@@ -19,6 +19,7 @@ import { EditSquad } from './components/EditSquad';
 import { PlayerProfile } from './components/PlayerProfile';
 import { FriendSearch as FriendSearchComponent } from './components/FriendSearch';
 import { ArenaSelector } from './components/ArenaSelector';
+import { EditProfile } from './components/EditProfile';
 import { MOCK_SQUADS, MOCK_CARDS, MOCK_REGIONS } from './constants';
 
 const PREDEFINED_AVATARS = [
@@ -44,7 +45,8 @@ const VIEW_TITLES: Record<string, string> = {
   [AppView.EDIT_SQUAD]: 'EDIT SQUAD',
   [AppView.SEARCH_FRIENDS]: 'SEARCH FRIENDS',
   [AppView.PLAYER_PROFILE]: 'PLAYER PROFILE',
-  [AppView.ARENA_SELECTOR]: 'ARENA SELECTOR'
+  [AppView.ARENA_SELECTOR]: 'ARENA SELECTOR',
+  [AppView.EDIT_PROFILE]: 'EDIT PROFILE'
 };
 
 const ROOT_TABS = [AppView.HOME, AppView.COLLECTIONS, AppView.STORE, AppView.LEADERBOARD, AppView.FRIENDS];
@@ -60,7 +62,8 @@ const App: React.FC = () => {
     coins: 12500,
     gems: 120,
     energyDrinks: 250,
-    wins: 128
+    wins: 128,
+    lastUsernameChange: 0 // Default 0 means they can change it immediately
   });
 
   const [ownedCardIds, setOwnedCardIds] = useState<string[]>(['1', '2', '3', '4', '5', '6']);
@@ -91,6 +94,7 @@ const App: React.FC = () => {
       case AppView.RANK_PROGRESSION: setCurrentView(AppView.HOME); break;
       case AppView.COLLECTION_LEVEL: setCurrentView(AppView.HOME); break;
       case AppView.ARENA_SELECTOR: setCurrentView(AppView.HOME); break;
+      case AppView.EDIT_PROFILE: setCurrentView(AppView.HOME); break;
       case AppView.MATCH_REWARDS:
         setIsPostMatch(true);
         setCurrentView(AppView.MATCH_STATS);
@@ -229,6 +233,7 @@ const App: React.FC = () => {
         );
       case AppView.SEARCH_FRIENDS: return <FriendSearchComponent onBack={handleBack} onOpenProfile={(u) => { setSelectedProfile(u); setCurrentView(AppView.PLAYER_PROFILE); }} />;
       case AppView.PLAYER_PROFILE: return <PlayerProfile user={selectedProfile} onBack={handleBack} />;
+      case AppView.EDIT_PROFILE: return <EditProfile user={userProfile} onBack={handleBack} onUpdateProfile={(u) => setUserProfile(prev => ({ ...prev, ...u }))} />;
       default: return null;
     }
   };
@@ -251,11 +256,12 @@ const App: React.FC = () => {
     currentView !== AppView.COLLECTION_LEVEL && 
     currentView !== AppView.MATCH_RESULT &&
     currentView !== AppView.MATCHMAKING &&
-    currentView !== AppView.GAMEPLAY;
+    currentView !== AppView.GAMEPLAY &&
+    currentView !== AppView.EDIT_PROFILE;
 
   const isRootTab = ROOT_TABS.includes(currentView);
   
-  const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_RESULT, AppView.MATCH_STATS, AppView.MATCH_REWARDS, AppView.ARENA_SELECTOR].includes(currentView);
+  const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_RESULT, AppView.MATCH_STATS, AppView.MATCH_REWARDS, AppView.ARENA_SELECTOR, AppView.EDIT_PROFILE].includes(currentView);
   const showBottomNav = !isImmersiveFlow;
 
   return (
@@ -341,13 +347,34 @@ const App: React.FC = () => {
       {/* MODALS */}
       <Modal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} title="PLAYER PROFILE">
         <div className="flex flex-col items-center py-6 gap-6">
-           <div className="w-24 h-24 rounded-full border-4 border-zinc-800 p-1 bg-zinc-900">
-             <img src={userProfile.avatar} className="w-full h-full rounded-full object-cover" alt="" />
+           <div className="relative">
+             <div className="w-24 h-24 rounded-full border-4 border-zinc-800 p-1 bg-zinc-900">
+               <img src={userProfile.avatar} className="w-full h-full rounded-full object-cover" alt="" />
+             </div>
+             <button 
+              onClick={() => {
+                setIsProfileModalOpen(false);
+                setCurrentView(AppView.EDIT_PROFILE);
+              }}
+              className="absolute -bottom-1 -right-1 p-2 bg-red-600 text-white rounded-full border-2 border-zinc-950 shadow-lg active:scale-90 transition-transform"
+             >
+               <Edit2 size={14} />
+             </button>
            </div>
            <div className="text-center">
              <h3 className="heading-font text-3xl font-black text-white italic">{userProfile.name}</h3>
              <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] mt-1">Level {userProfile.level} Arena Master</p>
            </div>
+           
+           <button 
+            onClick={() => {
+              setIsProfileModalOpen(false);
+              setCurrentView(AppView.EDIT_PROFILE);
+            }}
+            className="w-full py-4 bg-zinc-800 border border-zinc-700 rounded-2xl heading-font text-xl font-black italic uppercase tracking-widest text-zinc-300 hover:text-white transition-colors"
+           >
+             EDIT PROFILE
+           </button>
         </div>
       </Modal>
 
