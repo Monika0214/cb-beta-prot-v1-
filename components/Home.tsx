@@ -115,8 +115,8 @@ export const Home: React.FC<HomeProps> = ({ setView, startBrawl, squads, activeS
         </div>
       </section>
 
-      {/* 2. STANDARDIZED ACTION SHELF - POSITION ADJUSTMENT: bottom-[92px] increased to bottom-[116px] */}
-      <div className="fixed bottom-[116px] left-1/2 -translate-x-1/2 w-full max-w-lg px-2 z-[50] animate-action-shelf">
+      {/* 2. STANDARDIZED ACTION SHELF - POSITION ADJUSTMENT: Moved UPWARD MORE from bottom-[116px] to bottom-[172px] */}
+      <div className="fixed bottom-[172px] left-1/2 -translate-x-1/2 w-full max-w-lg px-2 z-[50] animate-action-shelf">
         <div className="flex items-center justify-center gap-2 w-full h-[84px] px-2 bg-black/60 backdrop-blur-xl border border-white/5 rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
           
           <button 
