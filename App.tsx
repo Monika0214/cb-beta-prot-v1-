@@ -22,12 +22,12 @@ import { ArenaSelector } from './components/ArenaSelector';
 import { EditProfile } from './components/EditProfile';
 import { MOCK_SQUADS, MOCK_CARDS, MOCK_REGIONS } from './constants';
 
-const PREDEFINED_AVATARS = [
-  'https://images.unsplash.com/photo-1540747913346-19e3adcc174b?auto=format&fit=crop&q=80&w=300&h=300',
-  'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=300&h=300',
-  'https://images.unsplash.com/photo-1593341646782-e0b495cff86d?auto=format&fit=crop&q=80&w=300&h=300',
-  'https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?auto=format&fit=crop&q=80&w=300&h=300',
-  'https://images.unsplash.com/photo-1629285401299-497b4b10492c?auto=format&fit=crop&q=80&w=300&h=300',
+const PERSON_AVATARS = [
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Aiden&backgroundColor=b6e3f4',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Chloe&backgroundColor=ffdfbf',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky&backgroundColor=c0aede',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=d1d4f9',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=ffd5dc',
 ];
 
 const VIEW_TITLES: Record<string, string> = {
@@ -55,7 +55,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.HOME);
   const [userProfile, setUserProfile] = useState({
     name: 'PlayerOne',
-    avatar: PREDEFINED_AVATARS[0],
+    avatar: PERSON_AVATARS[0],
     level: 10,
     xp: 1240,
     rank: 5,
@@ -63,12 +63,11 @@ const App: React.FC = () => {
     gems: 120,
     energyDrinks: 250,
     wins: 128,
-    lastUsernameChange: 0 // Default 0 means they can change it immediately
+    lastUsernameChange: 0
   });
 
   const [ownedCardIds, setOwnedCardIds] = useState<string[]>(['1', '2', '3', '4', '5', '6']);
   const [cardUpgrades, setCardUpgrades] = useState<Record<string, number>>({});
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isMissionsModalOpen, setIsMissionsModalOpen] = useState(false);
   const [editingSquadId, setEditingSquadId] = useState<string | null>(null);
   const [activeSquadId, setActiveSquadId] = useState<string>(MOCK_SQUADS[0].id);
@@ -132,7 +131,7 @@ const App: React.FC = () => {
     setIsPostMatch(false);
     setLastOutcome(null);
     setActiveMatch({
-      opponent: { name: 'DarkKnight_99', level: 7, avatar: 'https://images.unsplash.com/photo-1624192132371-367288e67f08?auto=format&fit=crop&q=80&w=200&h=200', squadPower: 245 },
+      opponent: { name: 'DarkKnight_99', level: 7, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Shadow&backgroundColor=2d3436', squadPower: 245 },
       region: region, ballsPlayed: 0, playerWins: 0, opponentWins: 0, currentStadium: 1, isDeclared: false, isDoubled: false, score: { player: 0, opponent: 0 }, playedCards: []
     });
     setCurrentView(AppView.MATCHMAKING);
@@ -205,7 +204,6 @@ const App: React.FC = () => {
             gemReward={lastOutcome!.gemReward}
             onNavigate={setCurrentView} 
             onBack={handleBack}
-            // Added missing userProfile
             userProfile={userProfile}
           />
         );
@@ -219,7 +217,6 @@ const App: React.FC = () => {
                energyReward={lastOutcome!.energyReward}
                gemReward={lastOutcome!.gemReward}
                onNavigate={() => {}} 
-               // Added missing userProfile
                userProfile={userProfile}
             />
             <PostMatchRewards 
@@ -271,7 +268,7 @@ const App: React.FC = () => {
         <header className="sticky top-0 z-[60] bg-black/95 backdrop-blur-2xl border-b border-zinc-900/50 animate-header-entry px-4 py-3 flex items-center justify-between gap-2 pt-[calc(0.75rem+env(safe-area-inset-top))]">
           <div className="flex items-center gap-2 shrink-0">
             <div 
-              onClick={() => setIsProfileModalOpen(true)} 
+              onClick={() => setCurrentView(AppView.EDIT_PROFILE)} 
               className="flex items-center gap-2 bg-[#1c1c1e] rounded-full pr-3 py-0.5 pl-0.5 cursor-pointer hover:bg-zinc-800 transition-all active:scale-95 shadow-lg border border-white/5 shrink-0"
             >
               <div className="w-7 h-7 rounded-full border border-teal-500/30 overflow-hidden bg-black shrink-0">
@@ -343,40 +340,6 @@ const App: React.FC = () => {
           })}
         </nav>
       )}
-
-      {/* MODALS */}
-      <Modal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} title="PLAYER PROFILE">
-        <div className="flex flex-col items-center py-6 gap-6">
-           <div className="relative">
-             <div className="w-24 h-24 rounded-full border-4 border-zinc-800 p-1 bg-zinc-900">
-               <img src={userProfile.avatar} className="w-full h-full rounded-full object-cover" alt="" />
-             </div>
-             <button 
-              onClick={() => {
-                setIsProfileModalOpen(false);
-                setCurrentView(AppView.EDIT_PROFILE);
-              }}
-              className="absolute -bottom-1 -right-1 p-2 bg-red-600 text-white rounded-full border-2 border-zinc-950 shadow-lg active:scale-90 transition-transform"
-             >
-               <Edit2 size={14} />
-             </button>
-           </div>
-           <div className="text-center">
-             <h3 className="heading-font text-3xl font-black text-white italic">{userProfile.name}</h3>
-             <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] mt-1">Level {userProfile.level} Arena Master</p>
-           </div>
-           
-           <button 
-            onClick={() => {
-              setIsProfileModalOpen(false);
-              setCurrentView(AppView.EDIT_PROFILE);
-            }}
-            className="w-full py-4 bg-zinc-800 border border-zinc-700 rounded-2xl heading-font text-xl font-black italic uppercase tracking-widest text-zinc-300 hover:text-white transition-colors"
-           >
-             EDIT PROFILE
-           </button>
-        </div>
-      </Modal>
 
       <Modal isOpen={isMissionsModalOpen} onClose={() => setIsMissionsModalOpen(false)} title="MISSIONS">
         <div className="space-y-3">

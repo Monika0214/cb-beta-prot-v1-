@@ -13,16 +13,16 @@ interface EditProfileProps {
 }
 
 const AVATAR_OPTIONS = [
-  'https://images.unsplash.com/photo-1540747913346-19e3adcc174b?auto=format&fit=crop&q=80&w=300&h=300',
-  'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=300&h=300',
-  'https://images.unsplash.com/photo-1593341646782-e0b495cff86d?auto=format&fit=crop&q=80&w=300&h=300',
-  'https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?auto=format&fit=crop&q=80&w=300&h=300',
-  'https://images.unsplash.com/photo-1629285401299-497b4b10492c?auto=format&fit=crop&q=80&w=300&h=300',
-  'https://api.dicebear.com/7.x/pixel-art/svg?seed=Felix',
-  'https://api.dicebear.com/7.x/pixel-art/svg?seed=Aneka',
-  'https://api.dicebear.com/7.x/pixel-art/svg?seed=Buddy',
-  'https://api.dicebear.com/7.x/pixel-art/svg?seed=Milo',
-  'https://api.dicebear.com/7.x/pixel-art/svg?seed=Luna',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Aiden&backgroundColor=b6e3f4',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Chloe&backgroundColor=ffdfbf',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky&backgroundColor=c0aede',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=d1d4f9',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=ffd5dc',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Milo&backgroundColor=c0aede',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Luna&backgroundColor=b6e3f4',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe&backgroundColor=ffdfbf',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Oscar&backgroundColor=d1d4f9',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Jasper&backgroundColor=ffd5dc',
 ];
 
 const USERNAME_COOLDOWN_DAYS = 30;
