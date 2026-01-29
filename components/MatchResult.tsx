@@ -10,7 +10,6 @@ interface MatchResultProps {
   gemReward: number;
   onNavigate: (view: AppView) => void;
   onBack?: () => void;
-  // Added userProfile to props to pass to PostMatchRewards
   userProfile: any;
 }
 
@@ -20,20 +19,16 @@ export const MatchResult: React.FC<MatchResultProps> = ({
   energyReward, 
   gemReward, 
   onNavigate,
-  // Added userProfile destructuring
   userProfile
 }) => {
   const [phase, setPhase] = useState<'animating' | 'ready'>('animating');
   const [showRewardsOverlay, setShowRewardsOverlay] = useState(false);
 
   useEffect(() => {
-    // Phase 1: Main result animation entry
     const animationTimer = setTimeout(() => {
       setPhase('ready');
     }, 800);
 
-    // Phase 2: Explicitly trigger the Rewards Overlay after the Result reveal
-    // Reduced delay to 1500ms for a snappier feel while ensuring result is seen
     const rewardTimer = setTimeout(() => {
       setShowRewardsOverlay(true);
     }, 1500);
@@ -78,12 +73,10 @@ export const MatchResult: React.FC<MatchResultProps> = ({
   return (
     <div className="h-full w-full bg-zinc-950 flex flex-col items-center justify-center relative overflow-hidden px-8 select-none">
       
-      {/* SWOOP BACKGROUND */}
       <div 
         className={`absolute inset-y-0 w-full ${resultData.streak} skew-x-[-20deg] ${resultData.aniClass}-streak z-0 pointer-events-none`} 
       />
       
-      {/* SPARKLES LAYER */}
       <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
         {[...Array(15)].map((_, i) => (
           <div 
@@ -135,7 +128,6 @@ export const MatchResult: React.FC<MatchResultProps> = ({
         .dec-swoop-sparkle { animation: sparkle-fly 1.2s ease-out forwards; }
       `}</style>
 
-      {/* RESULT TEXT - Dims when overlay is active */}
       <div className={`text-center z-20 space-y-4 mb-24 pointer-events-none transition-all duration-700 ${showRewardsOverlay ? 'opacity-20 scale-95 blur-[2px]' : 'opacity-100 scale-100'}`}>
         <h1 className={`heading-font text-8xl font-black italic tracking-tighter leading-none ${resultData.color} ${resultData.aniClass}`}>
           {resultData.title}
@@ -145,18 +137,15 @@ export const MatchResult: React.FC<MatchResultProps> = ({
         </p>
       </div>
 
-      {/* SUBTLE SCREEN DIM ON LOSS */}
       {outcome === 'defeat' && !showRewardsOverlay && (
         <div className={`absolute inset-0 bg-black/40 pointer-events-none z-10 transition-opacity duration-1000 ${phase === 'ready' ? 'opacity-100' : 'opacity-0'}`} />
       )}
 
-      {/* MANDATORY REWARDS OVERLAY - HIGH Z-INDEX COMPONENT */}
       {showRewardsOverlay && (
         <PostMatchRewards 
           payout={payout}
-          energyReward={energyReward}
-          gemReward={gemReward}
-          // Added userProfile pass-through for PostMatchRewards
+          energyEarned={energyReward}
+          gemsEarned={gemReward}
           userProfile={userProfile}
           onNavigate={onNavigate}
         />

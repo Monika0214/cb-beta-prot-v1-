@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Swords, Star, Zap, Shield, Activity, Target, LayoutGrid, ArrowLeft, Share2 } from 'lucide-react';
+import { Swords, Star, Zap, Shield, Activity, Target, LayoutGrid, X, Share2 } from 'lucide-react';
 import { MatchState } from '../types';
 import { MOCK_CARDS } from '../constants';
 import { Card } from './Card';
@@ -31,7 +32,7 @@ export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onE
       {/* Top Header Navigation */}
       <div className="fixed top-0 left-0 right-0 h-[52px] bg-black border-b border-zinc-800/50 flex items-center justify-between px-4 z-[70]">
         <button onClick={onBack} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-all active:scale-90">
-          <ArrowLeft size={20} />
+          <X size={20} />
         </button>
         <h1 className="heading-font text-2xl font-bold text-zinc-100 uppercase tracking-wider">
           MATCH STATS
@@ -41,7 +42,7 @@ export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onE
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8 pb-[180px] pt-20">
+      <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8 pb-[140px] pt-20">
         
         {/* Player Headers */}
         <div className="flex items-center justify-between px-2">
@@ -106,20 +107,20 @@ export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onE
         </div>
       </div>
 
-      {/* FOOTER ACTIONS - NEW LAYOUT */}
-      <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-zinc-950 border-t border-zinc-900 p-6 pb-12 z-50 flex flex-col gap-3">
-        <button 
-          onClick={onExit}
-          className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(220,38,38,0.4)] border-b-4 border-red-800 active:scale-[0.98] transition-all"
-        >
-          <span className="heading-font text-2xl font-black italic uppercase tracking-wider">MAIN MENU</span>
-        </button>
+      {/* FOOTER ACTIONS - NEW REFINED ROW LAYOUT */}
+      <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-zinc-950 border-t border-zinc-900 px-6 pt-4 pb-10 z-50 flex flex-row gap-4 items-center justify-between">
         <button 
           onClick={onBrawlAgain}
-          className="w-full py-4 bg-black border border-zinc-800 rounded-2xl font-black uppercase text-[12px] tracking-widest text-zinc-400 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2"
+          className="flex-1 h-11 bg-black border border-zinc-800 rounded-xl font-black uppercase text-[10px] tracking-[0.15em] text-zinc-400 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2"
         >
-          <Swords size={18} />
+          <Swords size={14} />
           BRAWL AGAIN
+        </button>
+        <button 
+          onClick={onExit}
+          className="flex-1 h-11 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-lg shadow-red-900/20 active:scale-[0.98] transition-all flex items-center justify-center"
+        >
+          <span className="heading-font text-xl font-black italic uppercase tracking-wider">MAIN MENU</span>
         </button>
       </footer>
     </div>

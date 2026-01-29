@@ -36,7 +36,7 @@ const AnimatedNumber: React.FC<{ value: number }> = ({ value }) => {
 
     const start = prevValueRef.current;
     const end = value;
-    const duration = 1500; // Premium slow-and-steady duration
+    const duration = 1200; // Premium slow-and-steady duration
     const startTime = performance.now();
 
     const animate = (currentTime: number) => {
@@ -69,7 +69,8 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
   userProfile,
   onNavigate,
 }) => {
-  // Initialize header balances to state BEFORE rewards were added
+  // We initialize the header state to the balance BEFORE rewards were added
+  // This allows the "tick-up" animation to play as each reward is revealed.
   const [headerCoins, setHeaderCoins] = useState(userProfile.coins - payout);
   const [headerEnergy, setHeaderEnergy] = useState(userProfile.energyDrinks - energyEarned);
   const [headerGems, setHeaderGems] = useState(userProfile.gems - gemsEarned);
@@ -78,13 +79,14 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
   const [contentVisible, setContentVisible] = useState(false);
   const [ctaVisible, setCtaVisible] = useState(false);
 
-  // Mandatory Reward Flow Order: COINS -> ENERGY -> GEMS
+  // Mandatory Reward Flow Order: 1. COINS -> 2. ENERGY -> 3. GEMS
   const steps = useMemo(() => {
     const list: RewardStep[] = [];
     if (payout > 0) list.push({ type: 'COINS', amount: payout });
     if (energyEarned > 0) list.push({ type: 'ENERGY', amount: energyEarned });
     if (gemsEarned > 0) list.push({ type: 'GEMS', amount: gemsEarned });
     
+    // Fallback if no rewards are earned at all
     if (list.length === 0) {
       list.push({ type: 'MATCH', amount: 'COMPLETED' });
     }
@@ -94,7 +96,7 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
 
-  // Initial Entrance: Reveal content after a short slide-up delay
+  // Initial Entrance Animation
   useEffect(() => {
     const entranceTimer = setTimeout(() => {
       setContentVisible(true);
@@ -103,34 +105,34 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
   }, []);
 
   /**
-   * CRITICAL LOGIC: 
-   * 1. Update header balance IMMEDIATELY when content becomes visible (on reveal).
-   * 2. Start the 3-second timer for the CTA button after reveal.
+   * REWARD REVEAL EFFECT:
+   * 1. Update header balance IMMEDIATELY on reveal.
+   * 2. Show CTA button AFTER 3-second delay.
    */
   useEffect(() => {
     if (contentVisible && currentStep) {
-      // 1. Immediate Balance Update on Reveal
+      // 1. Instant Balance Update on Reveal (Carrom-Pass Style)
       if (currentStep.type === 'COINS') setHeaderCoins(prev => prev + (currentStep.amount as number));
       if (currentStep.type === 'ENERGY') setHeaderEnergy(prev => prev + (currentStep.amount as number));
       if (currentStep.type === 'GEMS') setHeaderGems(prev => prev + (currentStep.amount as number));
 
-      // 2. Anticipation Delay: Wait 3 seconds before showing CTA
+      // 2. 3-Second Anticipation Timer for CTA
       const ctaTimer = setTimeout(() => {
         setCtaVisible(true);
       }, 3000);
 
       return () => clearTimeout(ctaTimer);
     }
-  }, [contentVisible, currentStepIndex, currentStep]);
+  }, [contentVisible, currentStepIndex]);
 
   const handleNextStep = () => {
     if (!ctaVisible) return;
 
     if (isLastStep) {
-      // Final step: Close and go to stats
+      // Navigate to Stats page on Final Finish
       onNavigate(AppView.MATCH_STATS);
     } else {
-      // Transition to next reward step
+      // Transition to next reward in sequence
       setContentVisible(false);
       setCtaVisible(false);
       setTimeout(() => {
@@ -158,15 +160,15 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
         onClick={handleSkip}
       />
 
-      {/* Reward Sheet (Modal Popup) - Slides up from bottom */}
+      {/* Reward Sheet (Modal Popup) - Slides up from bottom edge */}
       <div 
         className="relative w-full max-w-lg bg-zinc-950 rounded-t-[2.5rem] h-[82vh] border-t border-zinc-900 shadow-[0_-20px_60px_rgba(0,0,0,0.9)] animate-in slide-in-from-bottom-full duration-[600ms] ease-out flex flex-col overflow-hidden"
       >
         
-        {/* PERSISTENT HEADER: Balance HUD style */}
+        {/* MANDATORY PERSISTENT HEADER (User Details & Instant Balances) */}
         <div className="shrink-0 flex items-center justify-between px-8 py-6 border-b border-zinc-900/50 bg-black/20">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full border border-zinc-700 overflow-hidden bg-zinc-900">
+            <div className="w-10 h-10 rounded-full border border-zinc-700 overflow-hidden bg-zinc-900 shadow-lg">
               <img src={userProfile.avatar} className="w-full h-full object-cover" alt="" />
             </div>
             <div className="flex flex-col">
@@ -175,23 +177,29 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-5">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
               <Coins size={12} className="text-yellow-500/80" />
               <span className="heading-font text-xl font-black tracking-tight text-zinc-100">
                 <AnimatedNumber value={headerCoins} />
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <FlaskConical size={12} className="text-blue-400/80" />
               <span className="heading-font text-xl font-black tracking-tight text-zinc-100">
                 <AnimatedNumber value={headerEnergy} />
               </span>
             </div>
+            <div className="flex items-center gap-1.5">
+              <Gem size={12} className="text-violet-500/80" />
+              <span className="heading-font text-xl font-black tracking-tight text-zinc-100">
+                <AnimatedNumber value={headerGems} />
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Modal Handle & Skip */}
+        {/* Modal Handle & Skip Link */}
         <div className="shrink-0 flex flex-col items-center pt-3 pb-2 relative">
           <div className="w-10 h-1 bg-zinc-800 rounded-full mb-1 opacity-40" />
           <button 
@@ -202,17 +210,17 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
           </button>
         </div>
 
-        {/* Reward Reveal Area */}
+        {/* REWARD REVEAL CONTENT AREA */}
         <div className="flex-1 flex flex-col items-center justify-center px-10 relative">
           
-          {/* Subtle Dynamic Ambient Glow */}
+          {/* Subtle Ambient Glow */}
           <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full blur-[100px] opacity-10 transition-all duration-1000 ${
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] rounded-full blur-[100px] opacity-10 transition-all duration-1000 ${
               isCoins ? 'bg-yellow-500' : isEnergy ? 'bg-blue-500' : isGems ? 'bg-violet-500' : 'bg-red-500'
             }`} />
           </div>
 
-          {/* Reveal Content Wrapper */}
+          {/* Reveal Content Transition Wrapper */}
           <div className={`flex flex-col items-center justify-center transition-all duration-700 ease-out ${
             contentVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
           }`}>
@@ -225,11 +233,11 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
 
             <div key={currentStep?.type} className="flex flex-col items-center gap-10 relative z-10">
               
-              {/* Physical Icon with weighted bounce */}
+              {/* Physical Icon with Physical Weighted Bounce */}
               <div className={`relative flex items-center justify-center ${contentVisible ? 'animate-reward-bounce' : ''}`}>
                 <style>{`
                   @keyframes reward-bounce {
-                    0% { transform: scale(0.8) translateY(20px); opacity: 0; }
+                    0% { transform: scale(0.85) translateY(20px); opacity: 0; }
                     40% { transform: scale(1.08) translateY(-10px); opacity: 1; }
                     70% { transform: scale(0.96) translateY(4px); }
                     100% { transform: scale(1) translateY(0); opacity: 1; }
@@ -240,32 +248,32 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
                 `}</style>
 
                 {isCoins && (
-                  <div className="p-7 bg-zinc-900/60 rounded-full border border-yellow-500/20 shadow-lg">
+                  <div className="p-7 bg-zinc-900/60 rounded-full border border-yellow-500/20 shadow-2xl">
                     <Coins size={100} className="text-yellow-500/90" strokeWidth={1} />
                   </div>
                 )}
                 
                 {isEnergy && (
-                  <div className="relative p-7 bg-zinc-900/60 rounded-full border border-blue-500/20 shadow-lg">
+                  <div className="relative p-7 bg-zinc-900/60 rounded-full border border-blue-500/20 shadow-2xl">
                     <FlaskConical size={100} className="text-blue-400/90" strokeWidth={1} />
-                    <span className="absolute -top-1 -right-1 text-4xl animate-pulse">✨</span>
+                    <span className="absolute -top-1 -right-1 text-5xl animate-pulse">✨</span>
                   </div>
                 )}
                 
                 {isGems && (
-                  <div className="p-7 bg-zinc-900/60 rounded-full border border-violet-500/20 shadow-lg">
+                  <div className="p-7 bg-zinc-900/60 rounded-full border border-violet-500/20 shadow-2xl">
                     <Gem size={100} className="text-violet-500/90" strokeWidth={1} />
                   </div>
                 )}
 
                 {isMatch && (
-                  <div className="p-7 bg-zinc-900/60 rounded-full border border-zinc-800 shadow-lg">
+                  <div className="p-7 bg-zinc-900/60 rounded-full border border-zinc-800 shadow-2xl">
                     <Activity size={100} className="text-zinc-700" strokeWidth={1} />
                   </div>
                 )}
               </div>
 
-              {/* Amount Label */}
+              {/* Reward Amount Label */}
               <div className="text-center space-y-3">
                 <h2 className={`heading-font text-6xl font-black italic tracking-tighter uppercase leading-none ${
                   isCoins ? 'text-yellow-400' : 
@@ -282,21 +290,21 @@ export const PostMatchRewards: React.FC<PostMatchRewardsProps> = ({
           </div>
         </div>
 
-        {/* Footer CTA: Appear after 3-second reveal delay */}
-        <div className="shrink-0 pb-16 pt-4 flex justify-center z-10 h-28 items-center">
+        {/* Footer CTA: Appears ONLY after 3-second anticipation delay */}
+        <div className="shrink-0 pb-16 pt-4 flex justify-center z-10 h-32 items-center">
           <button 
             onClick={handleNextStep}
             disabled={!ctaVisible}
-            className={`flex items-center gap-3 text-zinc-400 hover:text-white transition-all duration-700 heading-font text-2xl font-black italic uppercase tracking-[0.2em] group active:scale-95 py-4 ${
+            className={`flex items-center gap-3 text-zinc-400 hover:text-white transition-all duration-1000 heading-font text-2xl font-black italic uppercase tracking-[0.2em] group active:scale-95 py-4 ${
               ctaVisible ? 'opacity-90 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
             }`}
           >
             {isLastStep ? 'FINISH' : 'COLLECT'}
-            <ArrowRight size={24} className="mt-1 transition-transform duration-700 group-hover:translate-x-2 animate-slow-nudge" />
+            <ArrowRight size={24} className="mt-1 transition-transform duration-700 group-hover:translate-x-3 animate-slow-nudge" />
             <style>{`
               @keyframes slow-nudge {
                 0%, 100% { transform: translateX(0); opacity: 0.6; }
-                50% { transform: translateX(5px); opacity: 1; }
+                50% { transform: translateX(4px); opacity: 1; }
               }
               .animate-slow-nudge {
                 animation: slow-nudge 3s infinite ease-in-out;

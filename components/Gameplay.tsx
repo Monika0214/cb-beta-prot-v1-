@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { ShieldAlert, Trophy, Zap, AlertTriangle, Coins, FlaskConical, X, BarChart2, LayoutGrid, TrendingUp } from 'lucide-react';
+import { ShieldAlert, Trophy, Zap, AlertTriangle, Coins, FlaskConical, X, BarChart2, LayoutGrid, AlertCircle } from 'lucide-react';
 import { MatchState, PlayerCard, AppView } from '../types';
 import { MOCK_CARDS } from '../constants';
 import { Card } from './Card';
@@ -34,6 +34,7 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
   const [draggedCard, setDraggedCard] = useState<PlayerCard | null>(null);
   const [isDeclareModalOpen, setIsDeclareModalOpen] = useState(false);
   const [isDevPanelOpen, setIsDevPanelOpen] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   // Interaction constraints
   const isMatchOver = isPostMatch || ballsPlayed >= 6;
@@ -42,6 +43,11 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
   const initialPool = match.region.entryFee * 2;
   const playablePool = Math.floor(initialPool * 0.9) * (match.isDoubled ? 2 : 1);
 
+  const triggerFeedback = (msg: string) => {
+    setFeedback(msg);
+    setTimeout(() => setFeedback(null), 2000);
+  };
+
   const handleDragStart = (card: PlayerCard) => {
     if (isMatchOver) return;
     setDraggedCard(card);
@@ -49,6 +55,16 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
 
   const handleDrop = (stadiumId: number) => {
     if (!draggedCard || isMatchOver) return;
+
+    const targetStadium = stadiums.find(s => s.id === stadiumId);
+    // STRICTOR RULE: Check for 4-card limit (per player)
+    const playerCardsInStadium = targetStadium?.playedCards.filter(pc => pc.side === 'player').length || 0;
+    
+    if (playerCardsInStadium >= 4) {
+      triggerFeedback("STADIUM FULL (MAX 4)");
+      setDraggedCard(null);
+      return;
+    }
 
     setStadiums(prev => prev.map(s => 
       s.id === stadiumId 
@@ -81,6 +97,9 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
     setStadiums(prev => prev.map(s => {
       const oppRuns = Math.floor(Math.random() * 6);
       const oppCard = MOCK_CARDS[Math.floor(Math.random() * MOCK_CARDS.length)];
+      
+      // Limit opponent to 4 cards too if we wanted, but logic usually focuses on player
+      // For now we just add it to track state
       return {
         ...s,
         opponentScore: s.opponentScore + oppRuns,
@@ -129,6 +148,13 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
   return (
     <div className="h-full flex flex-col bg-zinc-950 text-white select-none overflow-hidden relative">
       
+      {feedback && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[150] bg-red-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 shadow-[0_0_30px_rgba(220,38,38,0.5)] animate-in slide-in-from-top duration-300 border border-red-400">
+           <AlertCircle size={18} />
+           <span className="heading-font text-xl font-black italic tracking-widest uppercase">{feedback}</span>
+        </div>
+      )}
+
       {!isPostMatch && (
         <button 
           onClick={() => setIsDevPanelOpen(true)}
@@ -187,29 +213,74 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
         <section className="flex-1 flex gap-2 items-stretch min-h-0">
           {stadiums.map((stadium) => {
             const isWinning = stadium.playerScore > stadium.opponentScore;
+            // Get player's played cards for this stadium (limit to 4 for safety)
+            const playerCards = stadium.playedCards.filter(pc => pc.side === 'player').slice(0, 4);
+
             return (
               <div 
                 key={stadium.id}
                 onDragOver={(e) => !isPostMatch && e.preventDefault()}
                 onDrop={() => !isPostMatch && handleDrop(stadium.id)}
-                className={`flex-1 flex flex-col rounded-2xl border-2 transition-all duration-300 ${
-                  isWinning ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-zinc-800 bg-zinc-900/40'
+                className={`flex-1 flex flex-col rounded-2xl border-2 transition-all duration-300 relative overflow-hidden ${
+                  isWinning ? 'border-emerald-500/30 bg-emerald-500/5 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]' : 'border-zinc-800 bg-zinc-900/40'
                 }`}
               >
-                <div className="p-2 border-b border-zinc-800 text-center">
+                {/* Stadium Header */}
+                <div className="p-2 border-b border-zinc-800 text-center relative z-10">
                   <p className="heading-font text-[10px] font-black text-zinc-500 uppercase truncate">{stadium.name}</p>
                 </div>
-                <div className="flex-1 flex flex-col justify-around py-4 items-center min-h-0">
-                  <span className="heading-font text-3xl font-black text-zinc-600 opacity-40">{stadium.opponentScore}</span>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 shrink-0 ${
-                    isWinning ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-zinc-950 border-zinc-800 text-zinc-700'
+
+                {/* Score & Trophy Area - Top Portion */}
+                <div className="p-3 flex flex-col items-center gap-2 relative z-10">
+                  <span className="heading-font text-2xl font-black text-zinc-600 opacity-40 leading-none">
+                    {stadium.opponentScore}
+                  </span>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 shrink-0 ${
+                    isWinning ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.2)]' : 'bg-zinc-950 border-zinc-800 text-zinc-700'
                   }`}>
-                    <Trophy size={16} />
+                    <Trophy size={14} />
                   </div>
-                  <span className={`heading-font text-4xl font-black transition-all ${isWinning ? 'text-white scale-110' : 'text-zinc-400'}`}>
+                </div>
+
+                {/* 2X2 CARD GRID AREA (MANDATORY) */}
+                <div className="flex-1 px-2 flex items-center justify-center">
+                  <div className="grid grid-cols-2 gap-1.5 w-full max-w-[100px] aspect-square">
+                    {[0, 1, 2, 3].map((idx) => {
+                      const playedCard = playerCards[idx]?.card;
+                      return (
+                        <div 
+                          key={idx}
+                          className={`aspect-[3/4.2] rounded-md border border-zinc-800 bg-black/40 flex items-center justify-center overflow-hidden shadow-lg transition-all duration-500 ${
+                            playedCard ? 'scale-100 opacity-100' : 'scale-90 opacity-20'
+                          }`}
+                        >
+                          {playedCard ? (
+                            <Card 
+                              card={playedCard} 
+                              minimal={true} 
+                              className="w-full h-full border-0 rounded-none" 
+                            />
+                          ) : (
+                            <div className="heading-font text-[10px] font-black text-zinc-800">{idx + 1}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Player Score - Bottom Portion */}
+                <div className="p-4 flex flex-col items-center relative z-10">
+                  <span className={`heading-font text-4xl font-black transition-all leading-none ${isWinning ? 'text-white drop-shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'text-zinc-400'}`}>
                     {stadium.playerScore}
                   </span>
+                  <p className="text-[7px] font-black text-zinc-600 uppercase tracking-widest mt-1">TOTAL RUNS</p>
                 </div>
+
+                {/* Feedback glow if stadium is full */}
+                {playerCards.length >= 4 && (
+                  <div className="absolute inset-0 border-2 border-red-500/10 pointer-events-none" />
+                )}
               </div>
             );
           })}
@@ -281,7 +352,7 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
         </div>
       </footer>
 
-      {/* MODALS remain same as they overlay the screen */}
+      {/* MODALS */}
       {isDeclareModalOpen && !isPostMatch && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
