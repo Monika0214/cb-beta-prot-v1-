@@ -106,6 +106,9 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
 
   // Guard: Only show tabs for the My Players context
   const showTabs = context === 'my_players';
+  
+  // Guard: Identify My Squad context for removing upgrade elements and increasing card size
+  const isMySquadContext = context === 'my_squads' || context === 'edit_squad';
 
   // MANDATORY: Full list of 5 separate framed buttons in exact order
   const NAV_TABS: { id: InternalTab; label: string }[] = [
@@ -168,7 +171,9 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
       </header>
 
       {/* Hero Console Area - Focused Centerpiece */}
-      <div className="flex-1 w-full flex flex-col items-center justify-start px-4 relative pt-2 overflow-y-auto no-scrollbar pb-32">
+      <div className={`flex-1 w-full flex flex-col items-center px-4 relative overflow-y-auto no-scrollbar ${
+        isMySquadContext ? 'justify-center pb-12' : 'justify-start pt-2 pb-32'
+      }`}>
         
         {/* MANDATORY: 5 INDIVIDUAL FRAMED BUTTONS (SINGLE ROW, NO SCROLL) */}
         {showTabs && (
@@ -254,8 +259,13 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
             </div>
           )}
 
-          {/* Central Card - Applied tactical-gain animation wrapper */}
-          <div className={`shrink-0 transform scale-[0.85] sm:scale-95 z-10 transition-all duration-300 ${cardAnim ? 'animate-card-pop' : ''} ${justUnlockedTactical ? 'animate-tactical-gain' : ''}`}>
+          {/* Central Card - Applied tactical-gain animation wrapper. Scaling is boosted for My Squad context. */}
+          <div className={`shrink-0 transform z-10 transition-all duration-300 ${
+            isMySquadContext 
+              ? 'scale-[1.25] sm:scale-[1.45]' 
+              : 'scale-[0.85] sm:scale-95'
+            } ${cardAnim ? 'animate-card-pop' : ''} ${justUnlockedTactical ? 'animate-tactical-gain' : ''}`}
+          >
             <Card 
               card={card} 
               minimal={true}
@@ -299,8 +309,8 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
                 </p>
               )}
 
-              {/* CONSISTENT POSITION FOR UPGRADE CARDS (ALL PREVIEW STATES) */}
-              {!isStoreContext && (
+              {/* CONSISTENT POSITION FOR UPGRADE CARDS (ALL PREVIEW STATES) - Hidden in My Squad context */}
+              {!isStoreContext && !isMySquadContext && (
                 <div className="flex justify-between items-center gap-3 mt-6 w-full px-4">
                   {upgrades.map((u) => (
                     <UpgradeTile 
@@ -386,8 +396,8 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
       {/* Streamlined Footer Actions - Primary CTAs Anchored to Bottom */}
       <footer className="w-full max-w-xs px-6 pb-[calc(3rem+env(safe-area-inset-bottom))] flex flex-col gap-4 shrink-0 mt-auto">
         
-        {/* UNIFIED CTA BLOCK FOR ALL PREVIEW STATES (FIXED POSITION) */}
-        {!isStoreContext && activeInternalTab === 'PREVIEW' && (
+        {/* UNIFIED CTA BLOCK FOR ALL PREVIEW STATES (FIXED POSITION) - Hidden in My Squad context */}
+        {!isStoreContext && !isMySquadContext && activeInternalTab === 'PREVIEW' && (
           <div className="flex flex-col items-center justify-center w-full min-h-[72px] animate-in fade-in slide-in-from-bottom-2 duration-500">
             {!isTacticalUnlocked ? (
               /* ENABLED STATE: UNLOCK TACTICAL */
