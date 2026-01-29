@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { LayoutGrid, Users, Trophy, Store as StoreIcon, Coins, Gem, Target, Package, Library, ArrowLeft, Edit2, X, Shield } from 'lucide-react';
+import { LayoutGrid, Users, Trophy, Store as StoreIcon, Coins, Gem, Target, Package, Library, ArrowLeft, Edit2, X, Shield, Zap } from 'lucide-react';
 import { AppView, MatchState, Region, Squad, PlayerCard } from './types';
 import { Home } from './components/Home';
 import { Collections } from './components/Collections';
@@ -53,6 +53,7 @@ const ROOT_TABS = [AppView.HOME, AppView.COLLECTIONS, AppView.STORE, AppView.LEA
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.HOME);
+  const [storeInitialTab, setStoreInitialTab] = useState<string | undefined>(undefined);
   const [userProfile, setUserProfile] = useState({
     name: 'PlayerOne',
     avatar: PERSON_AVATARS[0],
@@ -84,6 +85,15 @@ const App: React.FC = () => {
     gemReward: number
   } | null>(null);
   const [isPostMatch, setIsPostMatch] = useState(false);
+
+  const handleSetView = (view: AppView, tab?: string) => {
+    if (view === AppView.STORE) {
+      setStoreInitialTab(tab);
+    } else {
+      setStoreInitialTab(undefined);
+    }
+    setCurrentView(view);
+  };
 
   const handleBack = () => {
     switch (currentView) {
@@ -127,11 +137,11 @@ const App: React.FC = () => {
     setOwnedCardIds(prev => [...prev, cardId]);
   };
 
-  const startBrawl = (region: Region) => {
+  const startBrawl = (region: Region, opponentOverride?: any) => {
     setIsPostMatch(false);
     setLastOutcome(null);
     setActiveMatch({
-      opponent: { name: 'DarkKnight_99', level: 7, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Shadow&backgroundColor=2d3436', squadPower: 245 },
+      opponent: opponentOverride || { name: 'DarkKnight_99', level: 7, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Shadow&backgroundColor=2d3436', squadPower: 245 },
       region: region, ballsPlayed: 0, playerWins: 0, opponentWins: 0, currentStadium: 1, isDeclared: false, isDoubled: false, score: { player: 0, opponent: 0 }, playedCards: []
     });
     setCurrentView(AppView.MATCHMAKING);
@@ -145,14 +155,25 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case AppView.HOME: return <Home setView={setCurrentView} startBrawl={startBrawl} squads={squads} activeSquadId={activeSquadId} onSelectSquad={setActiveSquadId} onEditSquad={handleEditSquad} userLevel={userProfile.level} selectedRegion={selectedRegion} />;
+      case AppView.HOME: return <Home setView={handleSetView} startBrawl={startBrawl} squads={squads} activeSquadId={activeSquadId} onSelectSquad={setActiveSquadId} onEditSquad={handleEditSquad} userLevel={userProfile.level} selectedRegion={selectedRegion} />;
       case AppView.ARENA_SELECTOR: return <ArenaSelector currentRegion={selectedRegion} userLevel={userProfile.level} onConfirm={(r) => { setSelectedRegion(r); setCurrentView(AppView.HOME); }} onBack={handleBack} />;
       case AppView.COLLECTIONS: 
         const ownedCards = MOCK_CARDS.filter(c => ownedCardIds.includes(c.id));
         return <Collections userProfile={userProfile} cardUpgrades={cardUpgrades} onUpgradeCard={handleUpgradeCard} onEditSquad={handleEditSquad} activeTab={collectionsTab} setActiveTab={setCollectionsTab} squads={squads} activeSquadId={activeSquadId} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} customCards={ownedCards} />;
       case AppView.LEADERBOARD: return <Leaderboard />;
-      case AppView.FRIENDS: return <Friends onNavigate={(v, p) => { if (p) setSelectedProfile(p); setCurrentView(v); }} />;
-      case AppView.STORE: return <Store ownedCardIds={ownedCardIds} onPurchaseCard={handlePurchaseCard} userGems={userProfile.gems} squads={squads} activeSquadId={activeSquadId} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} />;
+      case AppView.FRIENDS: 
+        return (
+          <Friends 
+            onNavigate={(v, p) => { if (p) setSelectedProfile(p); setCurrentView(v); }} 
+            onBrawl={(friend) => startBrawl(selectedRegion, {
+              name: friend.name,
+              level: friend.lv,
+              avatar: `https://picsum.photos/seed/${friend.name}/100/100`,
+              squadPower: 200 + (friend.lv * 2)
+            })}
+          />
+        );
+      case AppView.STORE: return <Store initialTab={storeInitialTab} ownedCardIds={ownedCardIds} onPurchaseCard={handlePurchaseCard} userGems={userProfile.gems} squads={squads} activeSquadId={activeSquadId} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} />;
       case AppView.RANK_PROGRESSION: return <RankProgression onClose={handleBack} rank={userProfile.rank} xp={userProfile.xp} />;
       case AppView.COLLECTION_LEVEL: return <LevelProgression onClose={handleBack} level={userProfile.level} xp={userProfile.xp} />;
       case AppView.EDIT_SQUAD: return <EditSquad squadId={editingSquadId} squads={squads} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} onBack={handleBack} userCoins={userProfile.coins} userEnergy={userProfile.energyDrinks} userGems={userProfile.gems} cardUpgrades={cardUpgrades} onUpgrade={handleUpgradeCard} />;
@@ -268,7 +289,7 @@ const App: React.FC = () => {
         <header className="sticky top-0 z-[60] bg-black/95 backdrop-blur-2xl border-b border-zinc-900/50 animate-header-entry px-4 py-3 flex items-center justify-between gap-2 pt-[calc(0.75rem+env(safe-area-inset-top))]">
           <div className="flex items-center gap-2 shrink-0">
             <div 
-              onClick={() => setCurrentView(AppView.EDIT_PROFILE)} 
+              onClick={() => handleSetView(AppView.EDIT_PROFILE)} 
               className="flex items-center gap-2 bg-[#1c1c1e] rounded-full pr-3 py-0.5 pl-0.5 cursor-pointer hover:bg-zinc-800 transition-all active:scale-95 shadow-lg border border-white/5 shrink-0"
             >
               <div className="w-7 h-7 rounded-full border border-teal-500/30 overflow-hidden bg-black shrink-0">
@@ -279,20 +300,25 @@ const App: React.FC = () => {
 
             <RankPill 
               rank={userProfile.level} 
-              onClick={(e) => { e.stopPropagation(); setCurrentView(AppView.COLLECTION_LEVEL); }} 
+              onClick={(e) => { e.stopPropagation(); handleSetView(AppView.COLLECTION_LEVEL); }} 
             />
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <div 
-              onClick={() => setCurrentView(AppView.STORE)} 
-              className="flex items-center bg-[#1c1c1e] rounded-full px-2 py-1 gap-2 cursor-pointer hover:bg-zinc-800 shadow-inner border border-white/5"
+              className="flex items-center bg-[#1c1c1e] rounded-full px-2 py-1 gap-2 shadow-inner border border-white/5"
             >
-              <div className="flex items-center gap-1">
+              <div 
+                className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors"
+                onClick={() => handleSetView(AppView.STORE, 'coins')}
+              >
                 <Coins size={10} className="text-amber-500/80" />
                 <span className="heading-font text-[11px] font-black tracking-tight text-zinc-300">{userProfile.coins.toLocaleString()}</span>
               </div>
-              <div className="flex items-center gap-1">
+              <div 
+                className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors"
+                onClick={() => handleSetView(AppView.STORE, 'gems')}
+              >
                 <Gem size={10} className="text-violet-500/80" />
                 <span className="heading-font text-[11px] font-black tracking-tight text-zinc-300">{userProfile.gems.toLocaleString()}</span>
               </div>
@@ -305,15 +331,37 @@ const App: React.FC = () => {
       )}
 
       {showGlobalHeader && (
-        <header className="fixed top-0 left-0 right-0 h-[calc(52px+env(safe-area-inset-top))] bg-black border-b border-zinc-800/50 flex items-center px-4 z-[70] shadow-sm pt-[env(safe-area-inset-top)]">
-          {!isRootTab && (
-            <button onClick={handleBack} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-all active:scale-90 mr-2">
-              <ArrowLeft size={20} />
-            </button>
+        <header className="fixed top-0 left-0 right-0 h-[calc(52px+env(safe-area-inset-top))] bg-black border-b border-zinc-800/50 flex items-center justify-between px-4 z-[70] shadow-sm pt-[env(safe-area-inset-top)]">
+          <div className="flex items-center min-w-0">
+            {!isRootTab && (
+              <button onClick={handleBack} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-all active:scale-90 mr-2">
+                <ArrowLeft size={20} />
+              </button>
+            )}
+            <h1 className="heading-font text-2xl font-bold text-zinc-100 uppercase tracking-wider truncate">
+              {VIEW_TITLES[currentView] || 'SCREEN'}
+            </h1>
+          </div>
+
+          {/* STORE ENHANCEMENT: DISPLAY ALL CURRENCIES IN TOP BAR */}
+          {currentView === AppView.STORE && (
+            <div className="flex items-center bg-[#1c1c1e] rounded-full px-3 py-1 gap-3 border border-white/5 shadow-inner shrink-0">
+              <div className="flex items-center gap-1">
+                <Coins size={10} className="text-amber-500/80" />
+                <span className="heading-font text-[11px] font-black text-zinc-300">{userProfile.coins.toLocaleString()}</span>
+              </div>
+              <div className="w-[1px] h-2.5 bg-zinc-800" />
+              <div className="flex items-center gap-1">
+                <Gem size={10} className="text-violet-500/80" />
+                <span className="heading-font text-[11px] font-black text-zinc-300">{userProfile.gems.toLocaleString()}</span>
+              </div>
+              <div className="w-[1px] h-2.5 bg-zinc-800" />
+              <div className="flex items-center gap-1">
+                <Zap size={10} className="text-blue-500/80" />
+                <span className="heading-font text-[11px] font-black text-zinc-300">{userProfile.energyDrinks.toLocaleString()}</span>
+              </div>
+            </div>
           )}
-          <h1 className="heading-font text-2xl font-bold text-zinc-100 uppercase tracking-wider">
-            {VIEW_TITLES[currentView] || 'SCREEN'}
-          </h1>
         </header>
       )}
 
@@ -332,7 +380,7 @@ const App: React.FC = () => {
           ].map((item) => {
             const isActive = currentView === item.view;
             return (
-              <button key={item.view} onClick={() => setCurrentView(item.view)} className="flex flex-col items-center justify-center flex-1 transition-all relative group">
+              <button key={item.view} onClick={() => handleSetView(item.view)} className="flex flex-col items-center justify-center flex-1 transition-all relative group">
                 <div className={`p-2 rounded-xl transition-all duration-300 ${isActive ? 'text-red-500' : 'text-zinc-500'}`}><item.icon size={item.view === AppView.HOME ? 28 : 22} strokeWidth={isActive ? 3 : 2} /></div>
                 <span className={`text-[9px] font-black uppercase tracking-widest mt-1 transition-all ${isActive ? 'text-white' : 'text-zinc-600'}`}>{item.label}</span>
               </button>

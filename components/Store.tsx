@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Coins, Gem, ShoppingBag, Frame, Package, PartyPopper } from 'lucide-react';
+import { Coins, Gem, ShoppingBag, Frame, Package, PartyPopper, X, ShieldCheck } from 'lucide-react';
 import { MOCK_CARDS } from '../constants';
 import { Card } from './Card';
 import { CardPreview } from './CardPreview';
@@ -47,6 +46,13 @@ const PACK_ITEMS = [
   { id: 'p3', name: 'LEGEND PACK', gemPrice: 2000, theme: 'from-amber-500 to-red-900', accent: 'amber' },
 ];
 
+interface ConfirmingPurchase {
+  name: string;
+  price: string;
+  reward: string;
+  type: 'coins' | 'gems';
+}
+
 interface StoreProps {
   initialTab?: string;
   ownedCardIds: string[];
@@ -63,15 +69,16 @@ export const Store: React.FC<StoreProps> = ({
   onPurchaseCard, 
   userGems
 }) => {
-  const [activeTab, setActiveTab] = useState('cards');
+  const [activeTab, setActiveTab] = useState(TABS[0].id);
   const [previewCard, setPreviewCard] = useState<PlayerCard | null>(null);
+  const [confirmingPurchase, setConfirmingPurchase] = useState<ConfirmingPurchase | null>(null);
   const tabListRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const queryTab = new URLSearchParams(window.location.search).get('tab');
     const sessionTab = sessionStorage.getItem(SESSION_STORAGE_KEY);
     
-    let targetTab = 'cards';
+    let targetTab = TABS[0].id;
     if (initialTab && VALID_TAB_IDS.includes(initialTab)) {
       targetTab = initialTab;
     } else if (queryTab && VALID_TAB_IDS.includes(queryTab)) {
@@ -93,6 +100,10 @@ export const Store: React.FC<StoreProps> = ({
   const storeCards = useMemo(() => {
     return MOCK_CARDS.filter(c => !ownedCardIds.includes(c.id));
   }, [ownedCardIds]);
+
+  const handleRealMoneyPurchase = (name: string, price: string, reward: string, type: 'coins' | 'gems') => {
+    setConfirmingPurchase({ name, price, reward, type });
+  };
 
   return (
     <div className="flex flex-col gap-6 px-4 pb-32 animate-in fade-in duration-500">
@@ -281,6 +292,9 @@ export const Store: React.FC<StoreProps> = ({
             let amountValue = activeTab === 'coins' ? i * 1000 : i * 50;
             let displayLabel = activeTab === 'coins' ? `${amountValue.toLocaleString()}` : `${amountValue.toLocaleString()}`;
             let icon = activeTab === 'coins' ? <Coins className="text-yellow-500" /> : <Gem className="text-red-500" />;
+            const itemName = `${activeTab === 'coins' ? 'Coin' : 'Gem'} Pack ${i}`;
+            const priceLabel = `₹ ${(i * 79).toFixed(0)}`;
+            const rewardText = `+${displayLabel} ${activeTab === 'coins' ? 'Coins' : 'Gems'}`;
             
             return (
               <div key={i} className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-5 flex flex-col items-center group cursor-pointer hover:border-red-600/50 transition-all shadow-xl animate-in slide-in-from-bottom-4 duration-300">
@@ -291,10 +305,13 @@ export const Store: React.FC<StoreProps> = ({
                    </div>
                 </div>
                 <h5 className="heading-font text-lg font-black text-white uppercase text-center leading-none mb-4 tracking-tight">
-                   {activeTab === 'coins' ? 'Coin' : 'Gem'} Pack {i}
+                   {itemName}
                 </h5>
-                <button className="w-full bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-4 border-red-800 shadow-xl active:scale-95 active:border-b-0">
-                  BUY ₹ {(i * 79).toFixed(0)}
+                <button 
+                  onClick={() => handleRealMoneyPurchase(itemName, priceLabel, rewardText, activeTab as 'coins' | 'gems')}
+                  className="w-full bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-4 border-red-800 shadow-xl active:scale-95 active:border-b-0"
+                >
+                  BUY {priceLabel}
                 </button>
               </div>
             );
@@ -312,6 +329,59 @@ export const Store: React.FC<StoreProps> = ({
           hideUpgrades={true}
           context="store"
         />
+      )}
+
+      {/* REAL-MONEY PURCHASE CONFIRMATION POPUP */}
+      {confirmingPurchase && (
+        <div className="fixed inset-0 z-[1000] bg-black/90 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col items-center text-center">
+            
+            <header className="mb-6 flex flex-col items-center gap-2">
+               <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 mb-2 border border-emerald-500/20">
+                 <ShieldCheck size={28} />
+               </div>
+               <h3 className="heading-font text-3xl font-black italic text-white uppercase tracking-tighter">Confirm Purchase</h3>
+            </header>
+
+            <div className="w-full bg-black/40 border border-white/5 rounded-3xl p-6 mb-8 flex flex-col items-center gap-4">
+               <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center shadow-lg border border-zinc-800">
+                  {confirmingPurchase.type === 'coins' ? (
+                    <Coins size={32} className="text-yellow-500" />
+                  ) : (
+                    <Gem size={32} className="text-red-500" />
+                  )}
+               </div>
+               <div className="flex flex-col items-center gap-1">
+                  <h4 className="heading-font text-2xl font-black text-white italic">{confirmingPurchase.name}</h4>
+                  <p className="heading-font text-3xl font-black text-emerald-500 tracking-tight">{confirmingPurchase.reward}</p>
+               </div>
+            </div>
+
+            <div className="w-full space-y-4">
+               <div className="flex justify-between items-center px-2 mb-2">
+                  <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Total Price</span>
+                  <span className="heading-font text-3xl font-black text-white">{confirmingPurchase.price}</span>
+               </div>
+
+               <button 
+                 onClick={() => {
+                   // Proceed logic here
+                   setConfirmingPurchase(null);
+                 }}
+                 className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl heading-font text-2xl font-black italic uppercase tracking-widest shadow-xl shadow-red-900/30 active:scale-[0.98] transition-all border-b-4 border-red-800"
+               >
+                 Confirm & Pay {confirmingPurchase.price}
+               </button>
+
+               <button 
+                 onClick={() => setConfirmingPurchase(null)}
+                 className="w-full py-2 text-zinc-500 hover:text-white transition-colors font-black uppercase text-[10px] tracking-[0.3em]"
+               >
+                 Cancel
+               </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

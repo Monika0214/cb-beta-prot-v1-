@@ -1,13 +1,13 @@
-
 import React, { useState } from 'react';
 import { Swords, UserPlus, Check, X, Search } from 'lucide-react';
 import { AppView } from '../types';
 
 interface FriendsProps {
   onNavigate: (view: AppView, params?: any) => void;
+  onBrawl?: (friend: any) => void;
 }
 
-export const Friends: React.FC<FriendsProps> = ({ onNavigate }) => {
+export const Friends: React.FC<FriendsProps> = ({ onNavigate, onBrawl }) => {
   const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
 
   const friendsList = [
@@ -74,7 +74,7 @@ export const Friends: React.FC<FriendsProps> = ({ onNavigate }) => {
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Challenge logic
+                    if (onBrawl) onBrawl(f);
                   }}
                   className={`p-2.5 rounded-xl transition-all ${
                   f.status === 'Online' ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/30' : 'bg-zinc-800 text-zinc-700 cursor-not-allowed border border-zinc-700'

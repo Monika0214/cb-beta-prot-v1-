@@ -289,8 +289,8 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
           )}
         </div>
 
-        {/* Dynamic Content Area BELOW card (Swaps based on tab) */}
-        <div className="w-full flex flex-col items-center mt-6">
+        {/* Dynamic Content Area BELOW card (Swaps based on tab). Spacing is increased in squad context to clear scaled card bottom. */}
+        <div className={`w-full flex flex-col items-center ${isMySquadContext ? 'mt-16 sm:mt-24' : 'mt-6'}`}>
           {activeInternalTab === 'PREVIEW' ? (
             <div className="flex flex-col items-center text-center max-w-[340px] space-y-1.5 shrink-0 animate-in fade-in duration-300">
               <div className="bg-zinc-900/80 px-2 py-0.5 rounded-full border border-white/5">
