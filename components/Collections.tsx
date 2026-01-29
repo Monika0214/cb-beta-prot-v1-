@@ -29,7 +29,7 @@ interface CollectionsProps {
   onUpdateSquad: (squad: Squad) => void;
   userProfile: any;
   cardUpgrades: Record<string, number>;
-  onUpgradeCard: (cardId: string, bitValue?: number) => void;
+  onUpgradeCard: (cardId: string, bitValue?: number, energyCost?: number) => void;
   customCards?: PlayerCard[];
 }
 
@@ -182,10 +182,12 @@ export const Collections: React.FC<CollectionsProps> = ({
           card={previewCard} 
           onClose={() => setPreviewCard(null)}
           userGems={userProfile.gems}
+          userEnergy={userProfile.energyDrinks}
           userLevel={userProfile.level}
           cardUpgrades={cardUpgrades[previewCard.id] || 0}
-          onUpgrade={(c, bit) => onUpgradeCard(c.id, bit)}
+          onUpgrade={(c, bit, energy) => onUpgradeCard(c.id, bit, energy)}
           squads={squads}
+          context={activeTab === 'players' ? 'my_players' : 'my_squads'}
         />
       )}
     </div>

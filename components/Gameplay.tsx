@@ -165,8 +165,8 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
         </button>
       )}
 
-      {/* HEADER SECTION */}
-      <section className="shrink-0 px-4 py-4 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 flex items-center justify-between z-50">
+      {/* HEADER SECTION - TIGHTENED SPACING */}
+      <section className="shrink-0 px-4 py-2 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 flex items-center justify-between z-50">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden">
             <img src="https://images.unsplash.com/photo-1540747913346-19e3adcc174b?auto=format&fit=crop&q=80&w=100&h=100" className="w-full h-full object-cover" alt="" />
@@ -180,7 +180,7 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
           </p>
           <div 
             onClick={() => !isMatchOver && !match.isDoubled && onDoublePool?.()}
-            className={`flex items-center gap-2 px-3 py-1 rounded-xl transition-all duration-300 relative ${
+            className={`flex items-center gap-2 px-3 py-0.5 rounded-xl transition-all duration-300 relative ${
               !isMatchOver && !match.isDoubled ? 'cursor-pointer hover:bg-yellow-500/10 active:scale-95' : ''
             }`}
           >
@@ -207,8 +207,8 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
         </div>
       </section>
 
-      {/* MAIN GAMEPLAY CONTENT - NON SCROLLABLE */}
-      <div className="flex-1 flex flex-col overflow-hidden p-2">
+      {/* MAIN GAMEPLAY CONTENT - REDUCED TOP PADDING FOR DENSITY */}
+      <div className="flex-1 flex flex-col overflow-hidden pt-1 px-2 pb-2">
         {/* Stadiums Area - Flexible height */}
         <section className="flex-1 flex gap-2 items-stretch min-h-0">
           {stadiums.map((stadium) => {
@@ -342,7 +342,7 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
                 className={`flex-1 rounded-xl heading-font text-3xl font-black italic uppercase tracking-wider transition-all ${
                   isMatchOver
                     ? 'bg-zinc-800 text-zinc-600 border-zinc-700 cursor-not-allowed'
-                    : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_10px_30px_rgba(220,38,38,0.4)] border-b-4 border-red-800 active:scale-[0.98] active:border-b-0'
+                    : 'bg-red-600 hover:bg-red-500 text-white shadow-0_10px_30px_rgba(220,38,38,0.4) border-b-4 border-red-800 active:scale-[0.98] active:border-b-0'
                 }`}
               >
                 {isMatchOver ? 'Match Ended' : 'End Ball'}

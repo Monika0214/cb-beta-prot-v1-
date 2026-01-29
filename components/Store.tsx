@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Coins, Gem, ShoppingBag, Frame, Package, PartyPopper } from 'lucide-react';
 import { MOCK_CARDS } from '../constants';
@@ -309,6 +310,7 @@ export const Store: React.FC<StoreProps> = ({
           userGems={userGems}
           isStoreContext={true}
           hideUpgrades={true}
+          context="store"
         />
       )}
     </div>

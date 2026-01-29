@@ -29,7 +29,7 @@ export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onE
   return (
     <div className="h-full flex flex-col bg-zinc-950 text-white animate-in fade-in duration-500 overflow-hidden relative">
       
-      {/* Top Header Navigation */}
+      {/* Top Header Navigation - Fixed height 52px */}
       <div className="fixed top-0 left-0 right-0 h-[52px] bg-black border-b border-zinc-800/50 flex items-center justify-between px-4 z-[70]">
         <button onClick={onBack} className="p-2 -ml-2 text-zinc-400 hover:text-white transition-all active:scale-90">
           <X size={20} />
@@ -42,7 +42,8 @@ export const MatchStats: React.FC<MatchStatsProps> = ({ match, onBrawlAgain, onE
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8 pb-[140px] pt-20">
+      {/* Main Content - Reduced pt from 64px to 58px to tighten gap with header */}
+      <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-[58px] pb-[140px] space-y-4">
         
         {/* Player Headers */}
         <div className="flex items-center justify-between px-2">
