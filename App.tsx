@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { LayoutGrid, Users, Trophy, Store as StoreIcon, Coins, Gem, Target, Package, Library, ArrowLeft, Edit2, X, Shield } from 'lucide-react';
 import { AppView, MatchState, Region, Squad, PlayerCard } from './types';
@@ -14,7 +15,7 @@ import { Matchmaking } from './components/Matchmaking';
 import { Gameplay } from './components/Gameplay';
 import { MatchResult } from './components/MatchResult';
 import { MatchStats } from './components/MatchStats';
-import { ProgressionView } from './components/ProgressionView';
+import { PostMatchRewards } from './components/PostMatchRewards';
 import { EditSquad } from './components/EditSquad';
 import { PlayerProfile } from './components/PlayerProfile';
 import { FriendSearch as FriendSearchComponent } from './components/FriendSearch';
@@ -54,7 +55,7 @@ const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState({
     name: 'PlayerOne',
     avatar: PREDEFINED_AVATARS[0],
-    level: 10, // Set to 10 so exactly UAE and SL are unlocked
+    level: 10,
     xp: 1240,
     rank: 5,
     coins: 12500,
@@ -166,7 +167,6 @@ const App: React.FC = () => {
         if (outcome === 'victory') {
           payout = playablePool;
           energyReward = activeMatch?.region.energyReward || 2;
-          // 10% chance for 5 Gems on victory
           if (Math.random() < 0.1) gemReward = 5;
         } else if (outcome === 'draw') {
           payout = Math.floor(playablePool * 0.5);
@@ -193,23 +193,41 @@ const App: React.FC = () => {
         setIsPostMatch(true); 
         setCurrentView(AppView.MATCH_RESULT); 
       }} />;
-      case AppView.MATCH_RESULT: return <MatchResult outcome={lastOutcome!.outcome} onNavigate={setCurrentView} onBack={handleBack} />;
+      case AppView.MATCH_RESULT: 
+        return (
+          <MatchResult 
+            outcome={lastOutcome!.outcome} 
+            payout={lastOutcome!.payout}
+            energyReward={lastOutcome!.energyReward}
+            gemReward={lastOutcome!.gemReward}
+            onNavigate={setCurrentView} 
+            onBack={handleBack}
+            // Added missing userProfile
+            userProfile={userProfile}
+          />
+        );
       case AppView.MATCH_STATS: return <MatchStats match={activeMatch!} onBrawlAgain={() => startBrawl(activeMatch!.region)} onExit={() => { setIsPostMatch(false); setCurrentView(AppView.HOME); }} onBack={handleBack} />;
       case AppView.MATCH_REWARDS: 
-        const isVictory = lastOutcome?.outcome === 'victory';
         return (
-          <ProgressionView 
-            outcome={lastOutcome!.outcome} 
-            oldXp={userProfile.xp} 
-            oldLevel={userProfile.level} 
-            currentXp={userProfile.xp + (isVictory ? 150 : 50)} 
-            currentLevel={userProfile.level} 
-            payout={lastOutcome?.payout || 0}
-            energyEarned={lastOutcome?.energyReward || 0}
-            gemsEarned={lastOutcome?.gemReward || 0}
-            onNavigate={setCurrentView}
-            onClose={() => { setIsPostMatch(false); setCurrentView(AppView.HOME); }}
-          />
+          <div className="h-full w-full relative">
+            <MatchResult 
+               outcome={lastOutcome!.outcome} 
+               payout={lastOutcome!.payout}
+               energyReward={lastOutcome!.energyReward}
+               gemReward={lastOutcome!.gemReward}
+               onNavigate={() => {}} 
+               // Added missing userProfile
+               userProfile={userProfile}
+            />
+            <PostMatchRewards 
+              payout={lastOutcome?.payout || 0}
+              energyEarned={lastOutcome?.energyReward || 0}
+              gemsEarned={lastOutcome?.gemReward || 0}
+              // Added userProfile for PostMatchRewards (Fix Error in line 218)
+              userProfile={userProfile}
+              onNavigate={setCurrentView}
+            />
+          </div>
         );
       case AppView.SEARCH_FRIENDS: return <FriendSearchComponent onBack={handleBack} onOpenProfile={(u) => { setSelectedProfile(u); setCurrentView(AppView.PLAYER_PROFILE); }} />;
       case AppView.PLAYER_PROFILE: return <PlayerProfile user={selectedProfile} onBack={handleBack} />;
@@ -228,7 +246,15 @@ const App: React.FC = () => {
     setCurrentView(AppView.EDIT_SQUAD);
   };
 
-  const showGlobalHeader = currentView !== AppView.HOME && currentView !== AppView.ARENA_SELECTOR && currentView !== AppView.MATCH_REWARDS;
+  const showGlobalHeader = 
+    currentView !== AppView.HOME && 
+    currentView !== AppView.ARENA_SELECTOR && 
+    currentView !== AppView.MATCH_REWARDS && 
+    currentView !== AppView.COLLECTION_LEVEL && 
+    currentView !== AppView.MATCH_RESULT &&
+    currentView !== AppView.MATCHMAKING &&
+    currentView !== AppView.GAMEPLAY;
+
   const isRootTab = ROOT_TABS.includes(currentView);
   
   const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_RESULT, AppView.MATCH_STATS, AppView.MATCH_REWARDS, AppView.ARENA_SELECTOR].includes(currentView);

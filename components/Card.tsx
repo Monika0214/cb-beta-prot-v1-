@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlayerCard } from '../types';
-import { Lock, Check, Sparkles } from 'lucide-react';
+import { Lock, Check, Sparkles, ChevronUp } from 'lucide-react';
 
 interface CardProps {
   card: PlayerCard;
@@ -11,6 +11,7 @@ interface CardProps {
   stage?: number;
   minimal?: boolean;
   showSparkle?: boolean;
+  upgradable?: boolean;
 }
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1629285401299-497b4b10492c?auto=format&fit=crop&q=80&w=400&h=600';
@@ -27,7 +28,8 @@ export const Card: React.FC<CardProps> = ({
   progressionState,
   stage = 0,
   minimal = false,
-  showSparkle = false
+  showSparkle = false,
+  upgradable = false
 }) => {
   const [imgSrc, setImgSrc] = useState<string>(card.image || FALLBACK_IMAGE);
 
@@ -113,9 +115,40 @@ export const Card: React.FC<CardProps> = ({
 
   return (
     <div 
-      className={`relative aspect-[3/4.2] bg-zinc-900 rounded-xl overflow-hidden border-2 transition-all flex flex-col ${rarityColors[card.rarity || 'Common']} ${className} ${bwStyle} ${lockedStyle} ${nextGlow} ${stageGlow} ${stageBorder}`}
+      className={`relative aspect-[3/4.2] bg-zinc-900 rounded-xl overflow-hidden border-2 transition-all flex flex-col ${upgradable ? 'upgradable-card-border' : rarityColors[card.rarity || 'Common']} ${className} ${bwStyle} ${lockedStyle} ${nextGlow} ${stageGlow} ${stageBorder}`}
       style={style}
     >
+      {/* KINETIC ENERGY FLOW OVERLAY (UPGRADABLE STATE) */}
+      {upgradable && !effectiveIsLocked && (
+        <div className="absolute inset-0 z-[15] pointer-events-none mix-blend-screen overflow-hidden">
+          {/* Animated Chevrons */}
+          <div className="absolute inset-0 flex flex-col items-center justify-around">
+            <ChevronUp className="kinetic-chevron" size={32} style={{ animationDelay: '0s' }} />
+            <ChevronUp className="kinetic-chevron" size={32} style={{ animationDelay: '0.8s' }} />
+            <ChevronUp className="kinetic-chevron" size={32} style={{ animationDelay: '1.6s' }} />
+          </div>
+
+          {/* Particle Fizz */}
+          <div className="absolute inset-x-0 bottom-0 h-1/2 overflow-hidden">
+            {[...Array(6)].map((_, i) => (
+              <div 
+                key={i}
+                className="fizz-particle absolute bg-emerald-400 w-1 h-1 rounded-sm"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  bottom: `${Math.random() * 20}%`,
+                  animationDelay: `${Math.random() * 2}s`,
+                  opacity: 0
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Edge Glow Internal Pulse */}
+          <div className="absolute inset-0 border border-emerald-500/30 rounded-lg animate-pulse" />
+        </div>
+      )}
+
       {/* EVOLUTIONARY AURAS */}
       {stage >= 2 && (
         <div className="absolute inset-0 bg-gradient-to-t from-red-600/20 to-transparent animate-pulse pointer-events-none z-[5]" />

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { ShieldAlert, Trophy, Zap, AlertTriangle, Coins, FlaskConical, X, BarChart2, LayoutGrid, TrendingUp } from 'lucide-react';
 import { MatchState, PlayerCard, AppView } from '../types';
@@ -138,7 +139,8 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
         </button>
       )}
 
-      <section className="px-4 py-4 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 flex items-center justify-between z-50">
+      {/* HEADER SECTION */}
+      <section className="shrink-0 px-4 py-4 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 flex items-center justify-between z-50">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden">
             <img src="https://images.unsplash.com/photo-1540747913346-19e3adcc174b?auto=format&fit=crop&q=80&w=100&h=100" className="w-full h-full object-cover" alt="" />
@@ -179,9 +181,10 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
         </div>
       </section>
 
-      {/* Main Gameplay Area */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-[140px] p-2">
-        <section className="flex gap-2 items-stretch min-h-[350px]">
+      {/* MAIN GAMEPLAY CONTENT - NON SCROLLABLE */}
+      <div className="flex-1 flex flex-col overflow-hidden p-2">
+        {/* Stadiums Area - Flexible height */}
+        <section className="flex-1 flex gap-2 items-stretch min-h-0">
           {stadiums.map((stadium) => {
             const isWinning = stadium.playerScore > stadium.opponentScore;
             return (
@@ -196,9 +199,9 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
                 <div className="p-2 border-b border-zinc-800 text-center">
                   <p className="heading-font text-[10px] font-black text-zinc-500 uppercase truncate">{stadium.name}</p>
                 </div>
-                <div className="flex-1 flex flex-col justify-around py-4 items-center">
+                <div className="flex-1 flex flex-col justify-around py-4 items-center min-h-0">
                   <span className="heading-font text-3xl font-black text-zinc-600 opacity-40">{stadium.opponentScore}</span>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 shrink-0 ${
                     isWinning ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-zinc-950 border-zinc-800 text-zinc-700'
                   }`}>
                     <Trophy size={16} />
@@ -212,7 +215,8 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
           })}
         </section>
 
-        <section className="px-2 mt-6">
+        {/* Hand Area - Preserved height */}
+        <section className="shrink-0 px-2 mt-4 mb-2">
           <div className="flex gap-3 overflow-x-auto no-scrollbar py-2">
             {hand.map((card) => (
               <div 
@@ -228,8 +232,8 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
         </section>
       </div>
 
-      {/* FOOTER ACTIONS - UPDATED FOR POST-MATCH FLOW */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-900 p-4 pb-12 z-[60] shadow-[0_-15px_40px_rgba(0,0,0,0.8)]">
+      {/* FOOTER ACTIONS - REPOSITIONED TO VERY BOTTOM EDGE */}
+      <footer className="shrink-0 bg-zinc-950 border-t border-zinc-900 p-4 pb-10 z-[60] shadow-[0_-15px_40px_rgba(0,0,0,0.8)]">
         <div className="max-w-lg mx-auto w-full flex flex-col gap-3">
           {isPostMatch ? (
             <>
@@ -277,6 +281,7 @@ export const Gameplay: React.FC<GameplayProps> = ({ match, isPostMatch = false, 
         </div>
       </footer>
 
+      {/* MODALS remain same as they overlay the screen */}
       {isDeclareModalOpen && !isPostMatch && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">

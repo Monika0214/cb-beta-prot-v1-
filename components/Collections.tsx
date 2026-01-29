@@ -99,6 +99,9 @@ export const Collections: React.FC<CollectionsProps> = ({
               <div className="grid grid-cols-2 gap-x-5 gap-y-10">
                 {groupedCards[cost].map((card) => {
                   const cardStage = getCardStage(card.id);
+                  // Simulate some cards being upgradable for visual demo
+                  const isUpgradable = card.id === '1' || card.id === '4' || card.id === '7';
+                  
                   return (
                     <div key={card.id} className="flex flex-col gap-3 cursor-pointer hover:scale-105 active:scale-95 transition-transform" onClick={() => setPreviewCard(card)}>
                       <Card 
@@ -106,6 +109,7 @@ export const Collections: React.FC<CollectionsProps> = ({
                         className="shadow-2xl" 
                         stage={cardStage} 
                         showSparkle={cardStage > 0}
+                        upgradable={isUpgradable}
                       />
                     </div>
                   );
