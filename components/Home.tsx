@@ -85,8 +85,8 @@ export const Home: React.FC<HomeProps> = ({ setView, startBrawl, squads, activeS
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/50 to-transparent" />
               </div>
 
-              {/* POSITION ADJUSTMENT: bottom-52 increased to bottom-64 for more upward clearance */}
-              <div className={`absolute inset-x-0 bottom-64 p-10 z-10 transition-opacity duration-300 ${activeIndex === i ? 'opacity-100 animate-hero-entry' : 'opacity-0'}`}>
+              {/* POSITION ADJUSTMENT: Content block moved to vertical middle using flex centering */}
+              <div className={`absolute inset-0 flex flex-col justify-center items-start p-10 z-10 transition-opacity duration-300 ${activeIndex === i ? 'opacity-100 animate-hero-entry' : 'opacity-0'}`}>
                 <h3 className="heading-font text-[36px] font-black text-white italic tracking-tight uppercase leading-[1.1] drop-shadow-[0_10px_10px_rgba(0,0,0,0.9)] max-w-[85%]">
                   {item.title}
                 </h3>
@@ -104,7 +104,7 @@ export const Home: React.FC<HomeProps> = ({ setView, startBrawl, squads, activeS
           ))}
         </div>
 
-        {/* POSITION ADJUSTMENT: Indicators moved to bottom-64 to match the content block */}
+        {/* Indicators moved slightly to maintain clear separation from centered content */}
         <div className="absolute bottom-64 left-1/2 -translate-x-1/2 flex gap-3 z-20">
           {CAROUSEL_ITEMS.map((_, i) => (
             <div 
@@ -115,8 +115,8 @@ export const Home: React.FC<HomeProps> = ({ setView, startBrawl, squads, activeS
         </div>
       </section>
 
-      {/* 2. STANDARDIZED ACTION SHELF - POSITION ADJUSTMENT: Moved UPWARD MORE from bottom-[116px] to bottom-[172px] */}
-      <div className="fixed bottom-[172px] left-1/2 -translate-x-1/2 w-full max-w-lg px-2 z-[50] animate-action-shelf">
+      {/* 2. STANDARDIZED ACTION SHELF - POSITION ADJUSTMENT: Precision shift closer to bottom nav from bottom-[152px] to bottom-[138px] */}
+      <div className="fixed bottom-[138px] left-1/2 -translate-x-1/2 w-full max-w-lg px-2 z-[50] animate-action-shelf">
         <div className="flex items-center justify-center gap-2 w-full h-[84px] px-2 bg-black/60 backdrop-blur-xl border border-white/5 rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
           
           <button 
