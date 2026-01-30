@@ -145,7 +145,8 @@ const App: React.FC = () => {
     switch (currentView) {
       case AppView.HOME: return <Home setView={setCurrentView} startBrawl={startBrawl} squads={squads} activeSquadId={activeSquadId} onSelectSquad={setActiveSquadId} onEditSquad={handleEditSquad} userLevel={userProfile.level} selectedRegion={selectedRegion} />;
       // Fixed Error in line 147: changed userLevel to userProfile.level
-      case AppView.ARENA_SELECTOR: return <ArenaSelector currentRegion={selectedRegion} userLevel={userProfile.level} onConfirm={(r) => { setSelectedRegion(r); setCurrentView(AppView.HOME); }} onBack={handleBack} />;
+      // Fixed Error in line 148: Added missing userCoins prop to ArenaSelector
+      case AppView.ARENA_SELECTOR: return <ArenaSelector userCoins={userProfile.coins} currentRegion={selectedRegion} userLevel={userProfile.level} onConfirm={(r) => { setSelectedRegion(r); setCurrentView(AppView.HOME); }} onBack={handleBack} />;
       case AppView.COLLECTIONS: 
         const ownedCards = MOCK_CARDS.filter(c => ownedCardIds.includes(c.id));
         return <Collections userProfile={userProfile} cardUpgrades={cardUpgrades} onUpgradeCard={handleUpgradeCard} onEditSquad={handleEditSquad} activeTab={collectionsTab} setActiveTab={setCollectionsTab} squads={squads} activeSquadId={activeSquadId} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} customCards={ownedCards} />;

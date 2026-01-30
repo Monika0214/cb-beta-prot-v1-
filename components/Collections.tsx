@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { MOCK_CARDS, EMBLEMS } from '../constants';
 import { Plus, Edit2, Zap, Trophy } from 'lucide-react';
@@ -184,6 +185,7 @@ export const Collections: React.FC<CollectionsProps> = ({
           userGems={userProfile.gems}
           userEnergy={userProfile.energyDrinks}
           userLevel={userProfile.level}
+          matchesPlayed={userProfile.matchesPlayed}
           cardUpgrades={cardUpgrades[previewCard.id] || 0}
           onUpgrade={(c, bit, energy) => onUpgradeCard(c.id, bit, energy)}
           squads={squads}

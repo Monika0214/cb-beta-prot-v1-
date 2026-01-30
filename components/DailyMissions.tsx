@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CheckCircle2, Star, Gem, Target } from 'lucide-react';
+import { CheckCircle2, Coins, Gem, Target } from 'lucide-react';
 
 interface Mission {
   id: string;
@@ -71,7 +71,7 @@ export const DailyMissions: React.FC = () => {
             {/* Reward Pill */}
             <div className={`flex flex-col items-end gap-1 shrink-0 ${isCompleted ? 'opacity-50' : 'opacity-100'}`}>
                <div className="flex items-center gap-1.5 bg-zinc-950 px-2.5 py-1 rounded-lg border border-zinc-800/50 shadow-inner">
-                  <Star size={10} className="text-amber-500" fill="currentColor" />
+                  <Coins size={10} className="text-amber-500" />
                   <span className="heading-font text-[14px] font-black text-white italic">+{mission.xp}</span>
                </div>
                {mission.gems && (

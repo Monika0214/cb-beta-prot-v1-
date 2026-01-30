@@ -1,16 +1,18 @@
+
 import React, { useState } from 'react';
 import { ArrowLeft, MapPin, Lock, Coins, Zap, CheckCircle2 } from 'lucide-react';
 import { MOCK_REGIONS, ExtendedRegion } from '../constants';
 import { Region } from '../types';
 
 interface ArenaSelectorProps {
+  userCoins: number;
   currentRegion: Region;
   userLevel: number;
   onConfirm: (region: Region) => void;
   onBack: () => void;
 }
 
-export const ArenaSelector: React.FC<ArenaSelectorProps> = ({ currentRegion, userLevel, onConfirm, onBack }) => {
+export const ArenaSelector: React.FC<ArenaSelectorProps> = ({ userCoins, currentRegion, userLevel, onConfirm, onBack }) => {
   const [pendingRegion, setPendingRegion] = useState<Region | null>(null);
 
   const handleRegionSelect = (region: ExtendedRegion) => {
@@ -35,6 +37,14 @@ export const ArenaSelector: React.FC<ArenaSelectorProps> = ({ currentRegion, use
         <h1 className="heading-font text-3xl font-black italic text-white uppercase tracking-tighter ml-4">
           ARENA SELECTOR
         </h1>
+
+        {/* MANDATORY CHANGE: User's current coin balance visibility */}
+        <div className="ml-auto flex items-center bg-zinc-900/50 px-3 py-1.5 rounded-full border border-white/5 gap-2 mr-2">
+          <Coins size={14} className="text-amber-500" />
+          <span className="heading-font text-xl font-black text-white leading-none">
+            {userCoins.toLocaleString()}
+          </span>
+        </div>
       </header>
 
       {/* List */}
@@ -88,16 +98,27 @@ export const ArenaSelector: React.FC<ArenaSelectorProps> = ({ currentRegion, use
                 {/* Row 2: Details or Unlock Message */}
                 <div className="mt-6 pt-5 border-t border-white/5">
                   {isLocked ? (
-                    <div className="flex items-center gap-3">
-                      <div className="h-0.5 w-6 bg-red-600/30" />
-                      <p className="heading-font text-2xl font-black text-red-600 italic uppercase tracking-widest">
-                        Unlocks at Level {r.unlockLevel}
-                      </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-0.5 w-6 bg-red-600/30" />
+                        <p className="heading-font text-2xl font-black text-red-600 italic uppercase tracking-widest">
+                          Unlocks at Level {r.unlockLevel}
+                        </p>
+                      </div>
+                      
+                      {/* CRITICAL: Display coin requirement even if locked, in disabled state */}
+                      <div className="flex flex-col items-center gap-1 opacity-30 grayscale">
+                        <div className="flex items-center gap-1.5">
+                          <Coins size={14} className="text-zinc-500" />
+                          <span className="heading-font text-2xl font-black text-zinc-500 leading-none">{r.entryFee}</span>
+                        </div>
+                        <span className="text-[7px] font-black text-zinc-700 uppercase tracking-widest">ENTRY</span>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-8">
-                        {/* Entry Fee */}
+                        {/* Entry Fee (Visible at a glance for unlocked) */}
                         <div className="flex flex-col items-center gap-1">
                           <div className="flex items-center gap-1.5">
                             <Coins size={14} className="text-amber-500" />

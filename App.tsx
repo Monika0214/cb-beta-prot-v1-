@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { LayoutGrid, Users, Trophy, Store as StoreIcon, Coins, Gem, Target, Package, Library, ArrowLeft, Edit2, X, Shield, Zap } from 'lucide-react';
+import { LayoutGrid, Users, Trophy, Store as StoreIcon, Coins, Gem, Target, Package, Library, ArrowLeft, Edit2, X, Shield, Zap, BookOpen } from 'lucide-react';
 import { AppView, MatchState, Region, Squad, PlayerCard } from './types';
 import { Home } from './components/Home';
 import { Collections } from './components/Collections';
@@ -22,6 +22,7 @@ import { FriendSearch as FriendSearchComponent } from './components/FriendSearch
 import { ArenaSelector } from './components/ArenaSelector';
 import { EditProfile } from './components/EditProfile';
 import { DailyMissions } from './components/DailyMissions';
+import { Documentation } from './components/Documentation';
 import { MOCK_SQUADS, MOCK_CARDS, MOCK_REGIONS } from './constants';
 
 const PERSON_AVATARS = [
@@ -48,7 +49,8 @@ const VIEW_TITLES: Record<string, string> = {
   [AppView.SEARCH_FRIENDS]: 'SEARCH FRIENDS',
   [AppView.PLAYER_PROFILE]: 'PLAYER PROFILE',
   [AppView.ARENA_SELECTOR]: 'ARENA SELECTOR',
-  [AppView.EDIT_PROFILE]: 'EDIT PROFILE'
+  [AppView.EDIT_PROFILE]: 'EDIT PROFILE',
+  [AppView.DOCUMENTATION]: 'DESIGNER DOCS'
 };
 
 const ROOT_TABS = [AppView.HOME, AppView.COLLECTIONS, AppView.STORE, AppView.LEADERBOARD, AppView.FRIENDS];
@@ -66,6 +68,7 @@ const App: React.FC = () => {
     gems: 120,
     energyDrinks: 250,
     wins: 128,
+    matchesPlayed: 428,
     lastUsernameChange: 0
   });
 
@@ -99,13 +102,18 @@ const App: React.FC = () => {
 
   const handleBack = () => {
     switch (currentView) {
-      case AppView.EDIT_SQUAD: setCurrentView(AppView.COLLECTIONS); break;
+      case AppView.EDIT_SQUAD: 
+        // MANDATORY CHANGE: Always navigate back to 'My Squads' tab in Collections
+        setCollectionsTab('squads');
+        setCurrentView(AppView.COLLECTIONS); 
+        break;
       case AppView.SEARCH_FRIENDS: setCurrentView(AppView.FRIENDS); break;
       case AppView.PLAYER_PROFILE: setCurrentView(AppView.FRIENDS); break;
       case AppView.RANK_PROGRESSION: setCurrentView(AppView.HOME); break;
       case AppView.COLLECTION_LEVEL: setCurrentView(AppView.HOME); break;
       case AppView.ARENA_SELECTOR: setCurrentView(AppView.HOME); break;
       case AppView.EDIT_PROFILE: setCurrentView(AppView.HOME); break;
+      case AppView.DOCUMENTATION: setCurrentView(AppView.HOME); break;
       case AppView.MATCH_REWARDS:
         setIsPostMatch(true);
         setCurrentView(AppView.MATCH_STATS);
@@ -158,7 +166,7 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case AppView.HOME: return <Home setView={handleSetView} startBrawl={startBrawl} squads={squads} activeSquadId={activeSquadId} onSelectSquad={setActiveSquadId} onEditSquad={handleEditSquad} userLevel={userProfile.level} selectedRegion={selectedRegion} />;
-      case AppView.ARENA_SELECTOR: return <ArenaSelector currentRegion={selectedRegion} userLevel={userProfile.level} onConfirm={(r) => { setSelectedRegion(r); setCurrentView(AppView.HOME); }} onBack={handleBack} />;
+      case AppView.ARENA_SELECTOR: return <ArenaSelector userCoins={userProfile.coins} currentRegion={selectedRegion} userLevel={userProfile.level} onConfirm={(r) => { setSelectedRegion(r); setCurrentView(AppView.HOME); }} onBack={handleBack} />;
       case AppView.COLLECTIONS: 
         const ownedCards = MOCK_CARDS.filter(c => ownedCardIds.includes(c.id));
         return <Collections userProfile={userProfile} cardUpgrades={cardUpgrades} onUpgradeCard={handleUpgradeCard} onEditSquad={handleEditSquad} activeTab={collectionsTab} setActiveTab={setCollectionsTab} squads={squads} activeSquadId={activeSquadId} onUpdateSquad={(s) => setSquads(p => p.map(q => q.id === s.id ? s : q))} customCards={ownedCards} />;
@@ -210,9 +218,11 @@ const App: React.FC = () => {
           }));
         }
 
-        if (outcome === 'victory') {
-          setUserProfile(p => ({ ...p, wins: p.wins + 1 }));
-        }
+        setUserProfile(p => ({ 
+          ...p, 
+          wins: outcome === 'victory' ? p.wins + 1 : p.wins,
+          matchesPlayed: p.matchesPlayed + 1
+        }));
         
         setLastOutcome({ outcome, declaredBalls, payout, energyReward, gemReward }); 
         setIsPostMatch(true); 
@@ -254,6 +264,7 @@ const App: React.FC = () => {
       case AppView.SEARCH_FRIENDS: return <FriendSearchComponent onBack={handleBack} onOpenProfile={(u) => { setSelectedProfile(u); setCurrentView(AppView.PLAYER_PROFILE); }} />;
       case AppView.PLAYER_PROFILE: return <PlayerProfile user={selectedProfile} onBack={handleBack} />;
       case AppView.EDIT_PROFILE: return <EditProfile user={userProfile} onBack={handleBack} onUpdateProfile={(u) => setUserProfile(prev => ({ ...prev, ...u }))} />;
+      case AppView.DOCUMENTATION: return <Documentation onBack={handleBack} />;
       default: return null;
     }
   };
@@ -277,11 +288,12 @@ const App: React.FC = () => {
     currentView !== AppView.MATCH_RESULT &&
     currentView !== AppView.MATCHMAKING &&
     currentView !== AppView.GAMEPLAY &&
-    currentView !== AppView.EDIT_PROFILE;
+    currentView !== AppView.EDIT_PROFILE &&
+    currentView !== AppView.DOCUMENTATION;
 
   const isRootTab = ROOT_TABS.includes(currentView);
   
-  const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_RESULT, AppView.MATCH_STATS, AppView.MATCH_REWARDS, AppView.ARENA_SELECTOR, AppView.EDIT_PROFILE].includes(currentView);
+  const isImmersiveFlow = [AppView.MATCHMAKING, AppView.GAMEPLAY, AppView.MATCH_RESULT, AppView.MATCH_STATS, AppView.MATCH_REWARDS, AppView.ARENA_SELECTOR, AppView.EDIT_PROFILE, AppView.DOCUMENTATION].includes(currentView);
   const showBottomNav = !isImmersiveFlow;
 
   return (
@@ -325,13 +337,21 @@ const App: React.FC = () => {
                 <span className="heading-font text-[11px] font-black tracking-tight text-zinc-300">{userProfile.gems.toLocaleString()}</span>
               </div>
             </div>
-            {/* RESTORED MISSION ENTRY POINT */}
-            <button 
-              onClick={() => setIsMissionsModalOpen(true)} 
-              className="p-1.5 text-zinc-600 hover:text-white transition-colors active:scale-90"
-            >
-              <Target size={18} />
-            </button>
+            {/* DESIGNER / MISSIONS ROW */}
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => setIsMissionsModalOpen(true)} 
+                className="p-1.5 text-zinc-600 hover:text-white transition-colors active:scale-90"
+              >
+                <Target size={18} />
+              </button>
+              <button 
+                onClick={() => handleSetView(AppView.DOCUMENTATION)} 
+                className="p-1.5 text-zinc-600 hover:text-white transition-colors active:scale-90"
+              >
+                <BookOpen size={18} />
+              </button>
+            </div>
           </div>
         </header>
       )}

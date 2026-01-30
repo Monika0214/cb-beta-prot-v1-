@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft, Trash2, Shield, Plus, Check, Zap, Trophy, Swords, Target, Activity, Flame, X, Edit2, AlertCircle } from 'lucide-react';
 import { MOCK_CARDS } from '../constants';
@@ -11,7 +10,6 @@ interface EditSquadProps {
   squads: Squad[];
   onUpdateSquad: (squad: Squad) => void;
   onBack: () => void;
-  // Adding missing props for CardPreview integration
   userCoins: number;
   userEnergy: number;
   userGems: number;
@@ -107,17 +105,11 @@ export const EditSquad: React.FC<EditSquadProps> = ({
         </div>
       )}
 
+      {/* HEADER: Internal back button removed. Only the global header back button is used. */}
       <header className="sticky top-0 z-[70] bg-black/95 backdrop-blur-2xl border-b border-zinc-900 px-4 py-4 flex items-center shadow-2xl">
         <button 
-          onClick={onBack}
-          className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-90 flex-shrink-0"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        
-        <button 
           onClick={() => setIsIdentityModalOpen(true)}
-          className="flex-1 flex items-center ml-4 group transition-all min-w-0"
+          className="flex-1 flex items-center group transition-all min-w-0"
         >
           <div className={`flex-shrink-0 flex items-center justify-center ${activeColor.class}`}>
              {(() => {
@@ -142,7 +134,6 @@ export const EditSquad: React.FC<EditSquadProps> = ({
       </header>
 
       <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
-        {/* SECTION 1: SQUAD SLOTS */}
         <section className="p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="heading-font text-xl font-black text-zinc-500 uppercase tracking-widest italic">Squad Lineup</h3>
@@ -160,7 +151,6 @@ export const EditSquad: React.FC<EditSquadProps> = ({
                 onClick={() => setPreviewCard(card)}
               >
                 <Card card={card} className="shadow-lg" />
-                {/* Visual overlay for squad cards - tapping body opens preview, tapping X removes */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center pointer-events-none">
                    <button 
                      onClick={(e) => {
@@ -193,7 +183,6 @@ export const EditSquad: React.FC<EditSquadProps> = ({
           )}
         </section>
 
-        {/* SECTION 2: PLAYER COLLECTION */}
         <section className="p-4 space-y-4 border-t border-zinc-900 mt-4">
           <h3 className="heading-font text-xl font-black text-zinc-500 uppercase tracking-widest italic">Collection</h3>
           
@@ -207,8 +196,6 @@ export const EditSquad: React.FC<EditSquadProps> = ({
                   onClick={() => setPreviewCard(card)}
                 >
                   <Card card={card} className="shadow-xl" />
-                  
-                  {/* Secondary Add (+) button overlay - hit area limited to the button circle */}
                   {!isAdded && (
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-all rounded-xl flex items-center justify-center backdrop-blur-[1px] pointer-events-none">
                        <button 
@@ -222,7 +209,6 @@ export const EditSquad: React.FC<EditSquadProps> = ({
                        </button>
                     </div>
                   )}
-
                   {isAdded && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/60 rounded-xl backdrop-blur-[2px] pointer-events-none">
                       <div className="p-2 bg-emerald-600 rounded-full text-white shadow-lg border border-white/20">
@@ -250,9 +236,7 @@ export const EditSquad: React.FC<EditSquadProps> = ({
           activeSquadId={squad.id}
           hideUpgrades={true}
           context="edit_squad"
-          onToggleSquad={(c) => {
-            toggleCard(c);
-          }}
+          onToggleSquad={(c) => toggleCard(c)}
         />
       )}
 

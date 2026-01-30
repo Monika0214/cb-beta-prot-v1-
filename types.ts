@@ -17,7 +17,8 @@ export enum AppView {
   SEARCH_FRIENDS = 'SEARCH_FRIENDS',
   PLAYER_PROFILE = 'PLAYER_PROFILE',
   EDIT_PROFILE = 'EDIT_PROFILE',
-  ARENA_SELECTOR = 'ARENA_SELECTOR'
+  ARENA_SELECTOR = 'ARENA_SELECTOR',
+  DOCUMENTATION = 'DOCUMENTATION'
 }
 
 /* Added missing AppTool enum for Sidebar component */
@@ -66,6 +67,7 @@ export interface UserProfile {
   gems: number;
   energyDrinks: number;
   wins: number;
+  matchesPlayed: number;
 }
 
 export interface Region {

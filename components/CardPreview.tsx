@@ -11,6 +11,7 @@ interface CardPreviewProps {
   userGems: number;
   userEnergy?: number; // Energy tracking for Tactical unlock
   userLevel?: number;
+  matchesPlayed?: number;
   cardUpgrades?: number; // Represented as a bitmask: 1=Tactical, 2=Lore, 4=Border, 8=Variant
   onUpgrade?: (card: PlayerCard, bitValue: number, energyCost?: number) => void;
   // Contextual props
@@ -42,6 +43,7 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
   userGems,
   userEnergy = 0,
   userLevel = 1,
+  matchesPlayed = 0,
   cardUpgrades = 0,
   onUpgrade,
   isStoreContext = false,
@@ -63,13 +65,22 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
   const isTacticalUnlocked = (cardUpgrades & 1) !== 0;
 
   const upgrades = useMemo(() => {
+    const isMyPlayers = context === 'my_players';
+    const hasPlayedAtLeastOneMatch = matchesPlayed > 0;
+
     return UPGRADE_DEFINITIONS.map((u) => {
       const isUnlocked = (cardUpgrades & u.bit) !== 0;
-      const isAvailable = !isUnlocked && userLevel >= u.levelReq;
+      
+      // CRITICAL GATE: If matchesPlayed is 0 in Players tab, all upgrades are locked.
+      let isAvailable = !isUnlocked && userLevel >= u.levelReq;
+      if (isMyPlayers && !hasPlayedAtLeastOneMatch) {
+        isAvailable = false;
+      }
+
       const isLocked = !isUnlocked && !isAvailable;
       return { ...u, isUnlocked, isAvailable, isLocked };
     });
-  }, [cardUpgrades, userLevel]);
+  }, [cardUpgrades, userLevel, matchesPlayed, context]);
 
   const leftUpgrades = upgrades.filter(u => u.side === 'left');
   const rightUpgrades = upgrades.filter(u => u.side === 'right');
@@ -143,7 +154,7 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
     <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center animate-in fade-in duration-300 overflow-hidden h-[100dvh] max-h-[100dvh] select-none">
       
       {/* Compact Header */}
-      <header className="w-full px-6 h-12 flex items-center justify-between shrink-0 relative z-10 pt-[env(safe-area-inset-top)]">
+      <header className="w-full px-6 h-12 flex items-center justify-between shrink-0 relative z-10 pt-[env(safe-area-inset-top))]">
         <button onClick={onClose} className="p-2 -ml-2 text-zinc-600 hover:text-white transition-colors">
           <ArrowLeft size={20} />
         </button>
@@ -193,14 +204,17 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
               const currentUpgradeBit = def ? (cardUpgrades & def.bit) : 0;
               const isLocked = def ? currentUpgradeBit === 0 : false;
               const isTacticalTab = tab.id === 'TACTICAL';
+              
+              // CRITICAL PROGRESSION GATE: Tactical tab is inaccessible until 1 match is played (Players tab context)
+              const isGated = isTacticalTab && context === 'my_players' && matchesPlayed === 0;
 
               return (
                 <button
                   key={tab.id}
-                  disabled={isLocked && tab.id !== 'PREVIEW'}
+                  disabled={(isLocked || isGated) && tab.id !== 'PREVIEW'}
                   onClick={() => {
-                    // CRITICAL PROGRESSION FIX: Tactical tab cannot be entered if locked
-                    if (isTacticalTab && isLocked) return;
+                    // CRITICAL PROGRESSION FIX: Tactical tab cannot be entered if locked or gated
+                    if ((isTacticalTab && isLocked) || isGated) return;
                     
                     // Clear attention indicator if entering Tactical
                     if (isTacticalTab) setTacticalDot(false);
@@ -210,17 +224,17 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
                   className={`relative flex-1 py-2 rounded-xl border heading-font text-[11px] font-bold tracking-tighter uppercase transition-all flex items-center justify-center min-w-0 ${
                     isActive 
                       ? 'bg-red-600 border-red-500 text-white shadow-lg z-10' 
-                      : isLocked && tab.id !== 'PREVIEW'
+                      : (isLocked || isGated) && tab.id !== 'PREVIEW'
                         ? 'bg-zinc-950 border-zinc-900 text-zinc-700 cursor-not-allowed'
                         : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
                   {/* ATTENTION INDICATOR - ONLY VISIBLE IF UNLOCKED AND HAS UNREAD CONTENT - HIGH VISIBILITY BEACON */}
-                  {isTacticalTab && tacticalDot && !isLocked && (
+                  {isTacticalTab && tacticalDot && !isLocked && !isGated && (
                     <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full z-20 border border-black/50 animate-expansive-pulse shadow-[0_0_12px_rgba(239,68,68,0.8)]" />
                   )}
                   
-                  {isLocked && tab.id !== 'PREVIEW' && (
+                  {(isLocked || isGated) && tab.id !== 'PREVIEW' && (
                     <Lock size={8} className={`mr-0.5 shrink-0 ${isActive ? 'text-white' : 'text-zinc-800'}`} />
                   )}
                   
@@ -400,25 +414,38 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
         {!isStoreContext && !isMySquadContext && activeInternalTab === 'PREVIEW' && (
           <div className="flex flex-col items-center justify-center w-full min-h-[72px] animate-in fade-in slide-in-from-bottom-2 duration-500">
             {!isTacticalUnlocked ? (
-              /* ENABLED STATE: UNLOCK TACTICAL */
-              <div className="flex flex-col items-center gap-1.5 w-full">
-                <div className="flex items-center gap-1">
-                  <Zap size={14} className="text-blue-500" fill="currentColor" />
-                  <span className="heading-font text-lg font-black text-zinc-400 leading-none">20</span>
+               /* PROGRESSION GATE: Tactical is fully locked until 1 match is played (Players tab only) */
+               (context === 'my_players' && (matchesPlayed || 0) === 0) ? (
+                 <div className="pt-5 w-full">
+                    <button 
+                      disabled
+                      className="w-full py-3 rounded-xl heading-font text-lg font-black italic uppercase tracking-widest bg-zinc-900 text-zinc-600 border border-zinc-800 opacity-60 cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <Lock size={16} />
+                      UNLOCK UPGRADE LVL 4
+                    </button>
+                 </div>
+               ) : (
+                /* ENABLED STATE: UNLOCK TACTICAL */
+                <div className="flex flex-col items-center gap-1.5 w-full">
+                  <div className="flex items-center gap-1">
+                    <Zap size={14} className="text-blue-500" fill="currentColor" />
+                    <span className="heading-font text-lg font-black text-zinc-400 leading-none">20</span>
+                  </div>
+                  
+                  <button 
+                    disabled={userEnergy < 20}
+                    onClick={() => setIsConfirmingTactical(true)}
+                    className={`w-full py-3 rounded-xl heading-font text-xl font-black italic uppercase tracking-widest shadow-xl transition-all active:scale-95 ${
+                      userEnergy >= 20
+                        ? 'bg-red-600 text-white shadow-red-900/40 border-b-2 border-red-800' 
+                        : 'bg-zinc-800 text-zinc-600 border border-zinc-700 opacity-50 cursor-not-allowed'
+                    }`}
+                  >
+                    Unlock Tactical
+                  </button>
                 </div>
-                
-                <button 
-                  disabled={userEnergy < 20}
-                  onClick={() => setIsConfirmingTactical(true)}
-                  className={`w-full py-3 rounded-xl heading-font text-xl font-black italic uppercase tracking-widest shadow-xl transition-all active:scale-95 ${
-                    userEnergy >= 20
-                      ? 'bg-red-600 text-white shadow-red-900/40 border-b-2 border-red-800' 
-                      : 'bg-zinc-800 text-zinc-600 border border-zinc-700 opacity-50 cursor-not-allowed'
-                  }`}
-                >
-                  Unlock Tactical
-                </button>
-              </div>
+               )
             ) : (
               /* DISABLED STATE: POST-UNLOCK PROGRESSION */
               <div className="pt-5 w-full">
@@ -465,7 +492,7 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
       {/* CONFIRMATION POPUP FOR TACTICAL */}
       {isConfirmingTactical && (
         <div className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col items-center text-center">
+          <div className="w-full max-sm bg-zinc-900 border border-zinc-800 rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-red-600/10 rounded-2xl flex items-center justify-center text-red-600 mb-6 border border-red-600/20">
               <Zap size={32} fill="currentColor" />
             </div>

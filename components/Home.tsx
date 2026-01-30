@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Swords, Users, MapPin, Shield, Trophy, Target, Activity, Flame, AlertCircle, Edit2, AlertTriangle, Plus, Lock, Zap, Coins, CheckCircle2 } from 'lucide-react';
 import { MOCK_REGIONS, MOCK_SQUADS, EMBLEMS, ExtendedRegion } from '../constants';
@@ -136,12 +137,18 @@ export const Home: React.FC<HomeProps> = ({ setView, startBrawl, squads, activeS
             </span>
           </button>
 
+          {/* CRITICAL BEHAVIOR: BRAWL Button state logic based on squad completion */}
           <button 
+            disabled={isIncomplete}
             onClick={() => startBrawl(selectedRegion)}
-            className="w-[130px] h-[68px] bg-red-600 border-b-4 border-red-800 rounded-2xl flex items-center justify-center gap-2 transition-all btn-press animate-brawl-pulse shadow-[0_8px_20px_rgba(220,38,38,0.3)] shrink-0 shimmer-btn"
+            className={`w-[130px] h-[68px] rounded-2xl flex items-center justify-center gap-2 transition-all shrink-0 ${
+              isIncomplete 
+                ? 'bg-zinc-800 text-zinc-600 border border-zinc-700 cursor-not-allowed grayscale shadow-none' 
+                : 'bg-red-600 border-b-4 border-red-800 text-white btn-press animate-brawl-pulse shadow-[0_8px_20px_rgba(220,38,38,0.3)] shimmer-btn'
+            }`}
           >
-            <Swords size={24} className="text-white drop-shadow-sm shrink-0" />
-            <span className="heading-font text-[24px] font-black italic tracking-tighter text-white leading-none">BRAWL</span>
+            <Swords size={24} className={`${isIncomplete ? 'text-zinc-600' : 'text-white drop-shadow-sm'} shrink-0`} />
+            <span className="heading-font text-[24px] font-black italic tracking-tighter leading-none">BRAWL</span>
           </button>
 
           <button 
