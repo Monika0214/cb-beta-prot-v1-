@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { LayoutGrid, Users, Trophy, Store as StoreIcon, Coins, Gem, Target, Package, Library, ArrowLeft, Edit2, X, Shield, Zap } from 'lucide-react';
 import { AppView, MatchState, Region, Squad, PlayerCard } from './types';
@@ -20,6 +21,7 @@ import { PlayerProfile } from './components/PlayerProfile';
 import { FriendSearch as FriendSearchComponent } from './components/FriendSearch';
 import { ArenaSelector } from './components/ArenaSelector';
 import { EditProfile } from './components/EditProfile';
+import { DailyMissions } from './components/DailyMissions';
 import { MOCK_SQUADS, MOCK_CARDS, MOCK_REGIONS } from './constants';
 
 const PERSON_AVATARS = [
@@ -289,7 +291,7 @@ const App: React.FC = () => {
         <header className="sticky top-0 z-[60] bg-black/95 backdrop-blur-2xl border-b border-zinc-900/50 animate-header-entry px-4 py-3 flex items-center justify-between gap-2 pt-[calc(0.75rem+env(safe-area-inset-top))]">
           <div className="flex items-center gap-2 shrink-0">
             <div 
-              onClick={() => handleSetView(AppView.EDIT_PROFILE)} 
+              onClick={() => setCurrentView(AppView.EDIT_PROFILE)} 
               className="flex items-center gap-2 bg-[#1c1c1e] rounded-full pr-3 py-0.5 pl-0.5 cursor-pointer hover:bg-zinc-800 transition-all active:scale-95 shadow-lg border border-white/5 shrink-0"
             >
               <div className="w-7 h-7 rounded-full border border-teal-500/30 overflow-hidden bg-black shrink-0">
@@ -323,7 +325,11 @@ const App: React.FC = () => {
                 <span className="heading-font text-[11px] font-black tracking-tight text-zinc-300">{userProfile.gems.toLocaleString()}</span>
               </div>
             </div>
-            <button onClick={() => setIsMissionsModalOpen(true)} className="p-1.5 text-zinc-600 hover:text-red-500 transition-colors active:scale-90">
+            {/* RESTORED MISSION ENTRY POINT */}
+            <button 
+              onClick={() => setIsMissionsModalOpen(true)} 
+              className="p-1.5 text-zinc-600 hover:text-white transition-colors active:scale-90"
+            >
               <Target size={18} />
             </button>
           </div>
@@ -389,18 +395,9 @@ const App: React.FC = () => {
         </nav>
       )}
 
-      <Modal isOpen={isMissionsModalOpen} onClose={() => setIsMissionsModalOpen(false)} title="MISSIONS">
-        <div className="space-y-3">
-           {[1,2,3].map(i => (
-             <div key={i} className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-col gap-2">
-                <div className="flex justify-between items-center">
-                   <p className="text-[10px] font-black text-white uppercase tracking-wider">Mission {i}</p>
-                   <p className="text-[10px] font-black text-emerald-500">+100 XP</p>
-                </div>
-                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden"><div className="h-full bg-emerald-500" style={{ width: '40%' }} /></div>
-             </div>
-           ))}
-        </div>
+      {/* RESTORED MISSION FLOW MODAL */}
+      <Modal isOpen={isMissionsModalOpen} onClose={() => setIsMissionsModalOpen(false)} title="DAILY MISSIONS">
+        <DailyMissions />
       </Modal>
     </div>
   );
